@@ -1,21 +1,46 @@
-enter search mode
-calibrate analog voltage swing of phototransistor and receiver over 1s.
+configure two phototransistors as analog inputs
+configure ir receiver as an analog input_pullup, i.e. with inverted logic with respect to 5V V_CC.
+record moving maximum analog voltage measured in both phototransistors.
+turn robot slowly, recording the average maximum analog voltage measured in both phototransistors.
+compare these maximum analog voltages to the previous ones, noting whether they are larger or smaller.
+if the new voltage is smaller than the previous one for one transistor, but larger for the other,
+  continue to rotate the robot, until both phototransistors read values within 5% from one another.
+now, the robot is pointing in the direction with highest common analog voltage from both phototransistors.
+this is the direction in which the nearest dummy is located.
+begin flashing the amber movement indicator led.
+accelerate the robot towards the dummy, until a distance of 10cm is recorded on the ultrasonic sensor.
+decelerate the robot to a halt, ensuring that the phototransistor signals do not exceed a value of 900.
+drive forwards slowly until an appropriate distance is achieved for lifting the dummy.
+stop flashing the amber movement indicator led.
+calibrate analog voltage swing of phototransistors and receiver over 10ms.
+change the analog reference voltage of the phototransistors to nearest internal reference maybe INTERNAL4V3, i.e 4.3 V.
+ensure that the dummy identified is correct:
+  loop waveform_identifier (): if a value more than 50 is recorded,
+    phototransistors: calculate moving average value measurements over 60us.
+      if one average value is between 800 and 1023 (upper 20%),
+        set pt_high to true.
+      if one average value is between 400 from 600 (central 20%),
+        set pt_high to false.
 
-phototransistor:
-if value > 40, start average value measurements over 60us.
-  if average value is between 230 and 255,
-    set pt1_high to true.
-  if average value is between 110 from 130,
-    set pt1_high to false.
+    receiver:
+      if a pulse of width 60us +/- 10% at or above the set internal reference voltage is recorded within 600us,
+        set r_high to true.
+      else, set r_high to false.
+    
+    return pt_high, r_high
+
+  run waveform_identifier loop for pt1_high and r1_high booleans.
+  repeat waveform_identifier loop for pt2_high and r2_high booleans.
+
+  if pt1_high and pt2_high are true and r1_high and r2_high are true,
+    dummy_number is 1.
+  elif pt1_high and pt2_high are true and r1_high and r2_high are false,
+    dummy_number is 2.
+  elif pt1_high and r2_high are true and pt2_high and r1_high are false,
+    dummy_number is 3.
+  elif pt1_high and r1_high are true and pt1_high and r2_high are false,
+    dummy_number is 3.
+  else, retry identification process
   
-wait 10us
-
-receiver:
-start average value measurements over 60us.
-  if average value is between 230 and 255,
-    set r1_high to true.
-  if average value is between 0 and 20,
-    set_r1_high to false.
-
-repeat loop after 530 us for pt2_high and r2_high.
-
+light the LED indicator associated with the identified dummy.
+end search and identification process.
