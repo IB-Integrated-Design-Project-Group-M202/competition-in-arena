@@ -19,18 +19,21 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
+// Define System parameters
+
+
 // Create Global variables
 bool accel = true;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
-  Serial.println("Adafruit Motor Shield v2.3 Test for DC Motors M1 & M2");
+  Serial.println(F("Adafruit Motor Shield v2.3 Test for DC Motors M1 & M2"));
 
   if (!AFMS.begin()) {         // create with the default frequency 1.6KHz
-    Serial.println("Could not find Motor Shield. Check wiring.");
+    Serial.println(F("Could not find Motor Shield. Check wiring."));
     while (1);
   }
-  Serial.println("Motor Shield found.");
+  Serial.println(F("Motor Shield found."));
 
   // Set a speed of 150 to start, where 0 is off & 255 is max speed
   leftMotor->setSpeed(150);
@@ -44,12 +47,10 @@ void setup() {
 }
 
 void loop() {
-  uint8_t i;
-
   if (accel) {
     leftMotor->run(FORWARD);
     rightMotor->run(FORWARD);
-    for (i=0; i<255; i++) {
+    for (uint8_t i=0; i<255; i++) {
       leftMotor->setSpeed(i);
       rightMotor->setSpeed(i);
       delay(10);
