@@ -14,18 +14,18 @@ decelerate the robot to a halt, ensuring that the phototransistor signals do not
 drive forwards slowly until an appropriate distance is achieved for lifting the dummy.
 stop flashing the amber movement indicator led.
 # identification
-calibrate analog voltage swing of phototransistors and receiver over 10ms.
+calibrate analog voltage swing of phototransistors and receiver over 100ms.
 change the analog reference voltage of the phototransistors to nearest internal reference maybe INTERNAL4V3, i.e 4.3 V.
 ensure that the dummy identified is correct:
   loop waveform_identifier (): if a value more than 50 is recorded,
-    phototransistors: calculate moving average value measurements over 60us.
+    phototransistors: calculate moving average value measurements over 600us.
       if one average value is between 800 and 1023 (upper 20%),
         set pt_high to true.
       if one average value is between 400 from 600 (central 20%),
         set pt_high to false.
 
     receiver:
-      if a pulse of width 60us +/- 10% at or above the set internal reference voltage is recorded within 600us,
+      if a pulse of width 600us +/- 10% at or above the set internal reference voltage is recorded within 600us,
         set r_high to true.
       else, set r_high to false.
     
