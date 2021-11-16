@@ -1,5 +1,6 @@
 configure two phototransistors as analog inputs
 configure ir receiver as an analog input_pullup, i.e. with inverted logic with respect to 5V V_CC.
+# aligning
 record moving maximum analog voltage measured in both phototransistors.
 turn robot slowly, recording the average maximum analog voltage measured in both phototransistors.
 compare these maximum analog voltages to the previous ones, noting whether they are larger or smaller.
@@ -12,6 +13,7 @@ accelerate the robot towards the dummy, until a distance of 10cm is recorded on 
 decelerate the robot to a halt, ensuring that the phototransistor signals do not exceed a value of 900.
 drive forwards slowly until an appropriate distance is achieved for lifting the dummy.
 stop flashing the amber movement indicator led.
+# identification
 calibrate analog voltage swing of phototransistors and receiver over 10ms.
 change the analog reference voltage of the phototransistors to nearest internal reference maybe INTERNAL4V3, i.e 4.3 V.
 ensure that the dummy identified is correct:
