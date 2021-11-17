@@ -16,9 +16,9 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 // Create Global variables
 bool accel = true, decel = false;
 unsigned long amberLED_Millis = 0; currentMillis = 0; time_elapsed = 0; trigger_Millis = 0; time_trigger = 0;
-const int amberLED_Pin = 8, echoPin = 2, trigPin = 3;
-int distance = 0, ledState = LOW;
-uint8_t speed = 0; amberLED_duration = 250; trigger_duration = 10;
+const int echoPin = 2, trigPin = 3; leftLineSensor = 4; rightLineSensor = 7, amberLED_Pin = 8;
+int distance = 0, amberLED_State = LOW; leftSensorStatus = LOW; rightSensorStatus = LOW;
+uint8_t leftSpeed = 0; rightSpeed = 0; amberLED_duration = 250; trigger_duration = 10;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -54,6 +54,8 @@ void loop() {
   currentMillis = millis();
   time_elapsed = currentMillis - amberLED_Millis;
   time_trigger = currentMillis - triger_Millis;
+  leftSensorStatus = digitalRead(leftLineSensor);
+  rightSensorStatus = digitalRead(rightLineSensor);
   if (distance == 0) {
     if (time_elapsed == 2) {
       digitalWrite(trigPin, HIGH);
@@ -70,36 +72,42 @@ void loop() {
     previousMillis = currentMillis;
 
     // if the LED is off turn it on and vice-versa:
-    if (ledState == LOW) {
-      ledState = HIGH;
-    } else {
-      ledState = LOW;
-    }
+    if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
 
     // set the LED with the ledState of the variable:
-    digitalWrite(ledPin, ledState);
+    digitalWrite(amberLED_Pin, amberLED_State);
     distance = 0;
+  }
+  if ((leftSensorStatus == LOW) && (rightSensorStatus == LOW)) {
+    if (leftSpeed != rightSpeed) {
+      leftSpeed = (leftSpeed + rightSpeed) / 2;
+      rightSpeed = (leftSpeed + rightSpeed) / 2;
+    }
+  } else
+  if ((leftSensorStatus == HIGH) && (rightSensorStatus == LOW)) {
+    leftSpeed += 5; rightSpeed -= 5;
+  } else
+  if ((leftSensorStatus == LOW) && (rightSensorStatus == HIGH)) {
+    leftSpeed -= 5; rightSpeed += 5;
   }
   if ((time_elapsed % 10) == 0) {
     if (accel) {
-      if (speed == 254) {
-        accel = !accel;
-      }
+      if (leftSpeed < 255) leftSpeed += 1;
+      if (rightSpeed < 255) rightSpeed += 1;
+      if ((leftSpeed == 255) && (rightSpeed == 255)) accel = !accel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      speed += 1;
-      leftMotor->setSpeed(speed);
-      rightMotor->setSpeed(speed);
+      leftMotor->setSpeed(leftSpeed);
+      rightMotor->setSpeed(rightSpeed);
     }
     if (decel) {
-      if (speed == 1) {
-        decel = !decel;
-      }
+      if (leftSpeed > 0) leftSpeed -= 1;
+      if (rightSpeed > 0) rightSpeed -= 1;
+      if ((leftSpeed == 0) && (rightSpeed == 0)) decel = !decel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      speed -= 1;
-      leftMotor->setSpeed(speed);
-      rightMotor->setSpeed(speed);
+      leftMotor->setSpeed(leftSpeed);
+      rightMotor->setSpeed(rightSpeed);
     }
   }
 }
