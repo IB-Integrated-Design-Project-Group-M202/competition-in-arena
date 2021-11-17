@@ -84,22 +84,22 @@ void loop() {
     if (accel) {
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      speed += 1;
-      leftMotor->setSpeed(speed);
-      rightMotor->setSpeed(speed);
       if (speed == 255) {
         accel = !accel;
       }
+      speed += 1;
+      leftMotor->setSpeed(speed);
+      rightMotor->setSpeed(speed);
     }
     if (decel) {
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      speed -= 1;
-      leftMotor->setSpeed(speed);
-      rightMotor->setSpeed(speed);
       if (speed == 0) {
         decel = !decel;
       }
+      speed -= 1;
+      leftMotor->setSpeed(speed);
+      rightMotor->setSpeed(speed);
     }
   }
 }
