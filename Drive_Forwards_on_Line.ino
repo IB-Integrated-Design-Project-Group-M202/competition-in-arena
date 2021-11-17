@@ -82,7 +82,7 @@ void loop() {
   }
   if ((time_elapsed % 10) == 0) {
     if (accel) {
-      if (speed == 255) {
+      if (speed == 254) {
         accel = !accel;
       }
       leftMotor->run(FORWARD);
@@ -92,7 +92,7 @@ void loop() {
       rightMotor->setSpeed(speed);
     }
     if (decel) {
-      if (speed == 0) {
+      if (speed == 1) {
         decel = !decel;
       }
       leftMotor->run(FORWARD);
