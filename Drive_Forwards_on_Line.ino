@@ -80,7 +80,7 @@ void loop() {
     if (leftSpeed != rightSpeed) {
       leftSpeed = (leftSpeed + rightSpeed) / 2;
       rightSpeed = (leftSpeed + rightSpeed) / 2;
-    }
+    } else accel = true;
   } else
   if ((leftSensorStatus == HIGH) && (rightSensorStatus == LOW)) {
     leftSpeed += 5; rightSpeed -= 5;
