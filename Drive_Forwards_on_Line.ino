@@ -1,14 +1,5 @@
 /* Pragash Mohanarajah (C) November 2021. */
 
-/*
-This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
-It won't work with v1.x motor shields! Only for the v2's with built in PWM
-control
-
-For use with the Adafruit Motor Shield v2
----->  http://www.adafruit.com/products/1438
-*/
-
 #include <Adafruit_MotorShield.h>
 
 // Create the motor shield object with the default I2C address
@@ -24,10 +15,10 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Create Global variables
 bool accel = true, decel = false;
-unsigned long previousMillis = 0;
-long duration;
-const int ledPin = 8, echoPin = 2, trigPin = 3;
+unsigned long amberLED_Millis = 0; currentMillis = 0; time_elapsed = 0; trigger_Millis = 0; time_trigger = 0;
+const int amberLED_Pin = 8, echoPin = 2, trigPin = 3;
 int distance = 0, ledState = LOW;
+uint8_t speed = 0; amberLED_duration = 250; trigger_duration = 10;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -49,7 +40,7 @@ void setup() {
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
   // Configure LED pin as an output
-  pinMode(ledPin, OUTPUT);
+  pinMode(amberLED_Pin, OUTPUT);
   // Configure Trigger pin of HC-SR04 as an output
   pinMode(trigPin, OUTPUT);
   // Configure Echo pin of HC-SR04 as an input
@@ -60,17 +51,21 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-  unsigned long time_elapsed = currentMillis - previousMillis;
-  if ((time_elapsed <= 5) && (distance == 0)) {
-    digitalWrite(trigPin, HIGH);
-    delay(10);
-    digitalWrite(trigPin, LOW);
-    duration = pulseIn(echoPin, HIGH);
-    distance = duration * 3.4 / 20;
-    if (distance < 150) decel = true;
+  currentMillis = millis();
+  time_elapsed = currentMillis - amberLED_Millis;
+  time_trigger = currentMillis - triger_Millis;
+  if (distance == 0) {
+    if (time_elapsed == 2) {
+      digitalWrite(trigPin, HIGH);
+      trigMillis = currentMillis;
+    if (time_trigger >= trigger_duration) {
+      digitalWrite(trigPin, LOW);
+      duration = pulseIn(echoPin, HIGH);
+      distance = duration * 3.4 / 20;
+      if (distance < 150) decel = true;
+    }
   }
-  if (time_elapsed >= 250) {
+  if (time_elapsed >= amberLED_duration) {
     // save the last time you blinked the LED
     previousMillis = currentMillis;
 
@@ -89,18 +84,20 @@ void loop() {
     if (accel) {
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      for (uint8_t i=0; i<255; i++) {
-        leftMotor->setSpeed(i);
-        rightMotor->setSpeed(i);
+      if (speed < 255) {
+        speed += 1;
+        leftMotor->setSpeed(speed);
+        rightMotor->setSpeed(speed);
       }
       accel = !accel;
     }
     if (decel) {
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      for (uint8_t i=0; i<255; i--) {
-        leftMotor->setSpeed(i);
-        rightMotor->setSpeed(i);
+      if (speed < 255) {
+        speed -= 1;
+        leftMotor->setSpeed(speed);
+        rightMotor->setSpeed(speed);
       }
       decel = !decel;
     }
