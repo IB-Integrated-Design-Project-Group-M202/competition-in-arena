@@ -15,7 +15,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Create Global variables
 bool accel = true, decel = false;
-unsigned long amberLED_Millis = 0, currentMillis = 0, previousMillis = 0, time_elapsed = 0, trigger_Millis = 0, echo_duration = 0, time_trigger = 0;
+unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, trigger_Millis = 0, echo_duration = 0, time_trigger = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8;
 int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW;
 uint8_t leftSpeed = 0, rightSpeed = 0, amberLED_duration = 250, trigger_duration = 10;
@@ -56,7 +56,7 @@ void loop() {
   time_trigger = currentMillis - trigger_Millis;
   leftSensorStatus = digitalRead(leftLineSensor);
   rightSensorStatus = digitalRead(rightLineSensor);
-  if (time_elapsed == 2) {
+  if (time_elapsed <= 20) {
     digitalWrite(trigPin, HIGH);
     trigger_Millis = currentMillis;
   }
@@ -68,7 +68,7 @@ void loop() {
   }
   if (time_elapsed >= amberLED_duration) {
     // save the last time you blinked the LED
-    previousMillis = currentMillis;
+    amberLED_Millis = currentMillis;
 
     // if the LED is off turn it on and vice-versa:
     if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
@@ -80,7 +80,8 @@ void loop() {
     if (leftSpeed != rightSpeed) {
       leftSpeed = (leftSpeed + rightSpeed) / 2;
       rightSpeed = (leftSpeed + rightSpeed) / 2;
-    } else accel = true;
+    } else
+    if ((leftSpeed < 255) || (rightSpeed < 255)) if (!decel) accel = true;
   } else
   if ((leftSensorStatus == HIGH) && (rightSensorStatus == LOW)) {
     leftSpeed += 5; rightSpeed -= 5;
