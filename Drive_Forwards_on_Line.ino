@@ -15,10 +15,10 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Create Global variables
 bool accel = true, decel = false;
-unsigned long amberLED_Millis = 0; currentMillis = 0; time_elapsed = 0; trigger_Millis = 0; time_trigger = 0;
-const int echoPin = 2, trigPin = 3; leftLineSensor = 4; rightLineSensor = 7, amberLED_Pin = 8;
-int distance = 0, amberLED_State = LOW; leftSensorStatus = LOW; rightSensorStatus = LOW;
-uint8_t leftSpeed = 0; rightSpeed = 0; amberLED_duration = 250; trigger_duration = 10;
+unsigned long amberLED_Millis = 0, currentMillis = 0, previousMillis = 0, time_elapsed = 0, trigger_Millis = 0, echo_duration = 0, time_trigger = 0;
+const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8;
+int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW;
+uint8_t leftSpeed = 0, rightSpeed = 0, amberLED_duration = 250, trigger_duration = 10;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -46,26 +46,25 @@ void setup() {
   // Configure Echo pin of HC-SR04 as an input
   pinMode(echoPin, INPUT);
   // Initialise all output pins as LOW
-  digitalWrite(ledPin, LOW);
+  digitalWrite(amberLED_Pin, LOW);
   digitalWrite(trigPin, LOW);
 }
 
 void loop() {
   currentMillis = millis();
   time_elapsed = currentMillis - amberLED_Millis;
-  time_trigger = currentMillis - triger_Millis;
+  time_trigger = currentMillis - trigger_Millis;
   leftSensorStatus = digitalRead(leftLineSensor);
   rightSensorStatus = digitalRead(rightLineSensor);
-  if (distance == 0) {
-    if (time_elapsed == 2) {
-      digitalWrite(trigPin, HIGH);
-      trigMillis = currentMillis;
-    if (time_trigger >= trigger_duration) {
-      digitalWrite(trigPin, LOW);
-      duration = pulseIn(echoPin, HIGH);
-      distance = duration * 3.4 / 20;
-      if (distance < 150) decel = true;
-    }
+  if (time_elapsed == 2) {
+    digitalWrite(trigPin, HIGH);
+    trigger_Millis = currentMillis;
+  }
+  if (time_trigger >= trigger_duration) {
+    digitalWrite(trigPin, LOW);
+    echo_duration = pulseIn(echoPin, HIGH);
+    distance = echo_duration * 3.4 / 20;
+    if (distance < 150) decel = true;
   }
   if (time_elapsed >= amberLED_duration) {
     // save the last time you blinked the LED
@@ -76,7 +75,6 @@ void loop() {
 
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
-    distance = 0;
   }
   if ((leftSensorStatus == LOW) && (rightSensorStatus == LOW)) {
     if (leftSpeed != rightSpeed) {
