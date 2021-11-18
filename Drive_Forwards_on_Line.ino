@@ -17,7 +17,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 bool accel = true, decel = false;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A0, pt2_Pin = A1;
-int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0;
+int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 uint8_t leftSpeed = 0, rightSpeed = 0, amberLED_duration = 250, trigger_duration = 10;
 
 void setup() {
@@ -65,13 +65,15 @@ void loop() {
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
+  if (readings[readIndex] < pt_Min) pt_Min = readings[readIndex];
+  if (readings[readIndex] > pt_Max) pt_Max = readings[readIndex];
   total = total + readings[readIndex];
   readIndex = readIndex + 1;
   if (readIndex >= numReadings) {
     readIndex = 0;
     average = total / numReadings;
     Serial.println(average);
-    if (average > 800) leftMotor->run(RELEASE); rightMotor->run(RELEASE);
+    if (pt_Max > 800) leftMotor->run(RELEASE); rightMotor->run(RELEASE);
     delay(12);
   }
   
