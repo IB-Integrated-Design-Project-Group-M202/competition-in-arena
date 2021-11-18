@@ -86,7 +86,7 @@ void loop() {
   if ((leftSensorStatus == LOW) && (rightSensorStatus == HIGH)) {
     leftSpeed -= 5; rightSpeed += 5;
   }
-  if ((time_elapsed % 10) == 0) {
+  if ((time_elapsed % 10) <= 2) {
     if (accel) {
       if (leftSpeed < 255) leftSpeed += 1;
       if (rightSpeed < 255) rightSpeed += 1;
