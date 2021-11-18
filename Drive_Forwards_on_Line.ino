@@ -16,8 +16,8 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 // Create Global variables
 bool accel = true, decel = false;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
-const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8;
-int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW;
+const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A0, pt2_Pin = A1;
+int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0;
 uint8_t leftSpeed = 0, rightSpeed = 0, amberLED_duration = 250, trigger_duration = 10;
 
 void setup() {
@@ -39,12 +39,19 @@ void setup() {
   // Turn off motors
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
+  // Initialize all the phototranistor readings to 0:
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = 0;
+  }
   // Configure LED pin as an output
   pinMode(amberLED_Pin, OUTPUT);
   // Configure Trigger pin of HC-SR04 as an output
   pinMode(trigPin, OUTPUT);
   // Configure Echo pin of HC-SR04 as an input
   pinMode(echoPin, INPUT);
+  // Configure Phototransistors as inputs
+  pinMode(pt1_Pin, INPUT);
+  pinMode(pt2_Pin, INPUT);
   // Initialise all output pins as LOW
   digitalWrite(amberLED_Pin, LOW);
   digitalWrite(trigPin, LOW);
@@ -56,6 +63,19 @@ void loop() {
   time_trigger = currentMillis - trigger_Millis;
   leftSensorStatus = digitalRead(leftLineSensor);
   rightSensorStatus = digitalRead(rightLineSensor);
+  
+  total = total - readings[readIndex];
+  readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
+  total = total + readings[readIndex];
+  readIndex = readIndex + 1;
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+    average = total / numReadings;
+    Serial.println(average);
+    if (average > 800) leftMotor->run(RELEASE); rightMotor->run(RELEASE);
+    delay(12);
+  }
+  
   if (time_elapsed >= amberLED_duration) {
     // save the last time you blinked the LED
     amberLED_Millis = currentMillis;
