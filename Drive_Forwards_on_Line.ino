@@ -92,24 +92,24 @@ void loop() {
     distance = echo_duration * 3.4 / 20;
     if (distance < 150) decel = true;
   }
-  if ((leftSensorStatus == LOW) && (rightSensorStatus == LOW)) {
+  if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
     if (leftSpeed != rightSpeed) {
       leftSpeed = (leftSpeed + rightSpeed) / 2;
       rightSpeed = (leftSpeed + rightSpeed) / 2;
     } else
-    if ((leftSpeed < 255) || (rightSpeed < 255)) if (!decel) accel = true;
+    if (leftSpeed < 255 || rightSpeed < 255) if (!decel) accel = true;
   } else
-  if ((leftSensorStatus == HIGH) && (rightSensorStatus == LOW)) {
+  if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
     leftSpeed += 5; rightSpeed -= 5;
   } else
-  if ((leftSensorStatus == LOW) && (rightSensorStatus == HIGH)) {
+  if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
     leftSpeed -= 5; rightSpeed += 5;
   }
   if ((time_elapsed % 10) <= 2) {
     if (accel) {
       if (leftSpeed < 255) leftSpeed += 1;
       if (rightSpeed < 255) rightSpeed += 1;
-      if ((leftSpeed == 255) && (rightSpeed == 255)) accel = !accel;
+      if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
       leftMotor->setSpeed(leftSpeed);
@@ -118,7 +118,7 @@ void loop() {
     if (decel) {
       if (leftSpeed > 0) leftSpeed -= 1;
       if (rightSpeed > 0) rightSpeed -= 1;
-      if ((leftSpeed == 0) && (rightSpeed == 0)) decel = !decel;
+      if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
       leftMotor->setSpeed(leftSpeed);
