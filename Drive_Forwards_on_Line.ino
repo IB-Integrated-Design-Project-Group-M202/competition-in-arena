@@ -60,7 +60,6 @@ void setup() {
 void loop() {
   currentMillis = millis();
   time_elapsed = currentMillis - amberLED_Millis;
-  time_trigger = currentMillis - trigger_Millis;
   leftSensorStatus = digitalRead(leftLineSensor);
   rightSensorStatus = digitalRead(rightLineSensor);
   
