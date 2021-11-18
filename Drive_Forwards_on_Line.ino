@@ -65,8 +65,8 @@ void loop() {
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
-  if (readings[readIndex] < pt_Min) pt_Min = readings[readIndex];
-  if (readings[readIndex] > pt_Max) pt_Max = readings[readIndex];
+  if (readings[readIndex] < pt_Min && readings[readIndex] != 0) pt_Min = readings[readIndex];
+  if (readings[readIndex] > pt_Max && readings[readIndex] != 1023) pt_Max = readings[readIndex];
   total = total + readings[readIndex];
   readIndex = readIndex + 1;
   if (readIndex >= numReadings) {
