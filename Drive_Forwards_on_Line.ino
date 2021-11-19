@@ -62,6 +62,8 @@ void loop() {
   time_elapsed = currentMillis - amberLED_Millis;
   leftSensorStatus = digitalRead(leftLineSensor);
   rightSensorStatus = digitalRead(rightLineSensor);
+  leftMotor->setSpeed(leftSpeed);
+  rightMotor->setSpeed(rightSpeed);
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
@@ -99,7 +101,7 @@ void loop() {
       leftSpeed = (leftSpeed + rightSpeed) / 2;
       rightSpeed = (leftSpeed + rightSpeed) / 2;
     } else
-    if (leftSpeed < 255 || rightSpeed < 255) if (!decel) accel = true;
+    if (leftSpeed == rightSpeed) if (leftSpeed < 255 || rightSpeed < 255) if (!decel) accel = true;
   } else
   if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
     leftSpeed += 5; rightSpeed -= 5;
@@ -114,8 +116,6 @@ void loop() {
       if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      leftMotor->setSpeed(leftSpeed);
-      rightMotor->setSpeed(rightSpeed);
     }
     if (decel) {
       if (leftSpeed > 0) leftSpeed -= 1;
@@ -123,8 +123,6 @@ void loop() {
       if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
       leftMotor->run(FORWARD);
       rightMotor->run(FORWARD);
-      leftMotor->setSpeed(leftSpeed);
-      rightMotor->setSpeed(rightSpeed);
     }
   }
 }
