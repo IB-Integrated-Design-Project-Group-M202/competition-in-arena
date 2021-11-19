@@ -109,20 +109,18 @@ void loop() {
   if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
     leftSpeed -= 51; rightSpeed += 51;
   }
-  if ((time_elapsed % 10) <= 2) {
-    if (accel) {
-      if (leftSpeed < 255) leftSpeed += 51;
-      if (rightSpeed < 255) rightSpeed += 51;
-      if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
-      leftMotor->run(FORWARD);
-      rightMotor->run(FORWARD);
-    }
-    if (decel) {
-      if (leftSpeed > 0) leftSpeed -= 51;
-      if (rightSpeed > 0) rightSpeed -= 51;
-      if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
-      leftMotor->run(FORWARD);
-      rightMotor->run(FORWARD);
-    }
+  if (accel) {
+    if (leftSpeed < 255) leftSpeed += 51;
+    if (rightSpeed < 255) rightSpeed += 51;
+    if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
+    leftMotor->run(FORWARD);
+    rightMotor->run(FORWARD);
+  }
+  if (decel) {
+    if (leftSpeed > 0) leftSpeed -= 51;
+    if (rightSpeed > 0) rightSpeed -= 51;
+    if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
+    leftMotor->run(FORWARD);
+    rightMotor->run(FORWARD);
   }
 }
