@@ -11,8 +11,9 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 bool aligned = false, arrived = false, identified = false;
+unsigned long currentMillis = 0, turn_start = 0;
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
-float x, y, z, x_offset = 0, y_offset = 0, z_offset = 0, x_turn = 0, y_turn = 0, z_turn = 0, turn_start = 0, angle_turned = 0;
+float x, y, z, x_offset = 0, y_offset = 0, z_offset = 0, x_turn = 0, y_turn = 0, z_turn = 0, angle_turned = 0;
 uint2_t dummy;
 
 void setup() {
@@ -41,6 +42,11 @@ void setup() {
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
   
+  // Initialize all the phototranistor readings to 0:
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    pt1_readings[thisReading] = 0;
+    pt2_readings[thisReading] = 0;
+  }
   // Configure two phototransistors as analog inputs
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
@@ -55,10 +61,10 @@ void setup() {
 }
 
 void align_with_dummy() {
-  while (millis() < 5000 && x_offset == 0 && y_offset == 0 && z_offset == 0) {
+  while (readings < 5000) {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
     x_total += x; y_total += y; z_total += z; readings += 1;
-    x_offset = x_total / readings; y_offset = y_total / readings; z_offset = z_total / readings;y
+    x_offset = x_total / readings; y_offset = y_total / readings; z_offset = z_total / readings;
     turn_start = millis();
   // Turn robot right slowly
   leftMotor->setSpeed(50);
@@ -78,6 +84,7 @@ void identify_dummy() {
 }
 
 void loop() {
+  currentMillis = millis();
   if (!aligned) align_with_dummy();
   if (aligned && !arrived) drive_to_dummy();
   if (aligned && arrived && !identified) identify_dummy();
