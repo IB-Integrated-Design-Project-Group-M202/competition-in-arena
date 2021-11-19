@@ -10,11 +10,11 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-bool aligned = false, arrived = false, identified = false;
-unsigned long currentMillis = 0, turn_start = 0;
+bool aligned = false, gyro_calibrated = false; arrived = false, identified = false;
+unsigned long startMillis = 0, currentMillis = 0, turn_start = 0;
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
-float x, y, z, x_total = 0, y_total = 0, z_total = 0, x_offset = 0, y_offset = 0, z_offset = 0, x_turn = 0, y_turn = 0, z_turn = 0, angle_turned = 0;
-uint2_t dummy;
+float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0;
+uint2_t dummy = 0;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -58,22 +58,25 @@ void setup() {
   // Initialise all outputs as LOW
   digitalWrite(greenLED_Pin, LOW);
   digitalWrite(redLED_Pin, LOW);
+  
+  startMillis = millis();
+}
+
+void calibrate_gyro() {
+  while (readings < 10000) {
+    if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
+    angle_total += z; readings += 1; angle_offset = angle_total / readings;
+  }
 }
 
 void align_with_dummy() {
-  while (readings < 5000) {
-    if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
-    x_total += x; y_total += y; z_total += z; readings += 1;
-    x_offset = x_total / readings; y_offset = y_total / readings; z_offset = z_total / readings;
-    turn_start = millis();
-  }
   // Turn robot right slowly
   leftMotor->setSpeed(50);
   rightMotor->setSpeed(50);
   leftMotor->run(FORWARD);
   rightMotor->run(BACKWARD);
-  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
-  x_turn = x - x_offset; y_turn = y - y_offset; z_turn = z - z_offset;
+  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z); angle_turned += (z - angle_offset)*10/1000;
+  delay(10);
 }
 
 void drive_to_dummy() {
@@ -86,9 +89,11 @@ void identify_dummy() {
 
 void loop() {
   currentMillis = millis();
-  if (!aligned) align_with_dummy();
-  if (aligned && !arrived) drive_to_dummy();
-  if (aligned && arrived && !identified) identify_dummy();
+  time_elapsed = currentMillis - startMillis;
+  if (!gyro_calibrated && !aligned) calibrate_gyro();
+  if (gyro_calibrated && !aligned) align_with_dummy();
+  if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
+  if (gyro_calibrated && aligned && arrived && !identified) identify_dummy();
   switch (dummy) {
     case 0:
       break;
