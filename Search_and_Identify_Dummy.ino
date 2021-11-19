@@ -13,7 +13,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 bool aligned = false, arrived = false, identified = false;
 unsigned long currentMillis = 0, turn_start = 0;
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
-float x, y, z, x_offset = 0, y_offset = 0, z_offset = 0, x_turn = 0, y_turn = 0, z_turn = 0, angle_turned = 0;
+float x, y, z, x_total = 0, y_total = 0, z_total = 0, x_offset = 0, y_offset = 0, z_offset = 0, x_turn = 0, y_turn = 0, z_turn = 0, angle_turned = 0;
 uint2_t dummy;
 
 void setup() {
@@ -66,6 +66,7 @@ void align_with_dummy() {
     x_total += x; y_total += y; z_total += z; readings += 1;
     x_offset = x_total / readings; y_offset = y_total / readings; z_offset = z_total / readings;
     turn_start = millis();
+  }
   // Turn robot right slowly
   leftMotor->setSpeed(50);
   rightMotor->setSpeed(50);
