@@ -10,7 +10,8 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13;
+const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
+uint2_t dummy;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -40,6 +41,9 @@ void setup() {
   // Configure green and red indication LEDs as analog outputs
   pinMode(greenLED_Pin, OUTPUT);
   pinMode(redLED_Pin, OUTPUT);
+  // Initialise all outputs as LOW
+  digitalWrite(greenLED_Pin, LOW);
+  digitalWrite(redLED_Pin, LOW);
 }
 
 void loop() {
@@ -48,4 +52,26 @@ void loop() {
   rightMotor->setSpeed(50);
   leftMotor->run(FORWARD);
   rightMotor->run(BACKWARD);
+  
+  switch (dummy) {
+    case 0:
+      break;
+    case 1:
+      digitalWrite(greenLED_Pin, HIGH);
+      digitalWrite(redLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(greenLED_Pin, LOW);
+      digitalWrite(redLED_Pin, LOW);
+      break;
+    case 2:
+      digitalWrite(redLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(redLED_Pin, LOW);
+      break;
+    case 3:
+      digitalWrite(greenLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(greenLED_Pin, LOW);
+      break;
+  }
 }
