@@ -122,7 +122,7 @@ void loop() {
   currentMillis = millis();
   elapsedMillis = currentMillis - startMillis;
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
-  if (x > 0.28) over_ramp = true;
+  if (x > 0.28) search_area = true;
   if (!gyro_calibrated && !aligned) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
