@@ -12,7 +12,7 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 bool gyro_calibrated = false, search_area = false, aligned = false, arrived = false, identified = false;
-unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, lastMillis = 0, amberLED_Millis = 0;
+unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, amberLED_Millis = 0, last_gyro = 0, last_amber = 0;
 const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
 int i, j, amberLED_State = LOW, distance, gyroMillis = 0;
@@ -108,9 +108,9 @@ void align_with_dummy() {
 }
 
 void drive_to_dummy() {
-  if (elapsedMillis >= amberLED_duration) {
+  if (amberLED_Millis >= amberLED_duration) {
     // save the last time you blinked the LED
-    amberLED_Millis = currentMillis;
+    last_amber = currentMillis;
 
     // if the LED is off turn it on and vice-versa:
     if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
@@ -135,12 +135,13 @@ void identify_dummy() {
 void loop() {
   currentMillis = millis();
   elapsedMillis = currentMillis - startMillis;
-  gyroMillis = currentMillis - lastMillis;
+  gyroMillis = currentMillis - last_gyro;
+  amberLED_Millis = currentMillis - last_amber;
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (x > 0.28) search_area = true;
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
   if (gyroMillis >= 50) angle_turned += (z - angle_offset) * gyroMillis/1E3 * 180/160.7;
-  lastMillis = currentMillis;
+  last_gyro = millis();
   if (!gyro_calibrated && !aligned) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
