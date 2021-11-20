@@ -11,10 +11,11 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-bool aligned = false, gyro_calibrated = false, arrived = false, identified = false;
+bool gyro_calibrated = false, search_area = false, aligned = false, arrived = false, identified = false;
 unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros = 0, elapsedMicros = 0, elapsedMillis = 0;
-const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 576;
-int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
+const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
+int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt1_Max = 0;
+int i, j;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0;
 uint8_t dummy = 0;
 
@@ -73,6 +74,22 @@ void calibrate_gyro() {
   gyro_calibrated = true;
 }
 
+void pt_reading() {
+  pt1_total -= pt1_readings[readIndex]; pt2_total -= pt2_readings[readIndex];
+  pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
+  if (pt1_readings[readIndex] < pt1_Min && pt1_readings[readIndex] > 20) pt1_Min = pt1_readings[readIndex];
+  if (pt1_readings[readIndex] > pt1_Max && pt1_readings[readIndex] < 1000) pt1_Max = pt1_readings[readIndex];
+  if (pt2_readings[readIndex] < pt2_Min && pt2_readings[readIndex] > 20) pt2_Min = pt2_readings[readIndex];
+  if (pt2_readings[readIndex] > pt2_Max && pt2_readings[readIndex] < 1000) pt2_Max = pt2_readings[readIndex];
+  pt1_total += pt1_readings[readIndex]; pt2_total += pt2_readings[readIndex];
+  readIndex += 1;
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+    pt1_average = pt1_total / numReadings; pt2_average = pt2_total / numReadings;
+    delay(12);
+  }
+}
+
 void align_with_dummy() {
   // Turn robot right slowly
   leftMotor->setSpeed(60);
@@ -82,8 +99,8 @@ void align_with_dummy() {
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
   currentMicros = micros();
   elapsedMicros = currentMicros - lastMicros;
-  angle_turned += (z - angle_offset) * elapsedMicros/1E6 * 180/160.7;
-  delay(50);
+  if (elapsedMicros >= 50000) angle_turned += (z - angle_offset) * elapsedMicros/1E6 * 180/160.7;
+  pt_reading();
   lastMicros = currentMicros;
 }
 
@@ -98,6 +115,8 @@ void identify_dummy() {
 void loop() {
   currentMillis = millis();
   elapsedMillis = currentMillis - startMillis;
+  if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
+  if (x > 0.28) over_ramp = true;
   if (!gyro_calibrated && !aligned) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
