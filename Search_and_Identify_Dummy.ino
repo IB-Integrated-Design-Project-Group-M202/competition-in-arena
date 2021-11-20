@@ -1,4 +1,4 @@
- /* Pragash Mohanarajah (C) November 2021. */
+/* Pragash Mohanarajah (C) November 2021. */
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
@@ -12,12 +12,12 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 bool gyro_calibrated = false, search_area = false, aligned = false, arrived = false, identified = false;
-unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, gyroMillis = 0;
+unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, lastMillis = 0, amberLED_Millis = 0;
 const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
-int i, j, amberLED_State = LOW;
+int i, j, amberLED_State = LOW, distance, gyroMillis = 0;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0, pt1_angle = 0, pt2_angle = 0, dummy_angle = 0;
-uint8_t dummy = 0, amberLED_duration = 250, trigger_duration = 10;
+uint8_t dummy = 0, echo_duration = 0, amberLED_duration = 250, trigger_duration = 10;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -81,7 +81,7 @@ void calibrate_gyro() {
 void pt_reading() {
   pt1_total = pt1_total - pt1_readings[readIndex]; pt2_total = pt2_total - pt2_readings[readIndex];
   pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
-  pt1_total = pt1-total + pt1_readings[readIndex]; pt2_total = pt2_total + pt2_readings[readIndex];
+  pt1_total = pt1_total + pt1_readings[readIndex]; pt2_total = pt2_total + pt2_readings[readIndex];
   readIndex += 1;
   if (readIndex >= numReadings) {
     readIndex = 0;
@@ -123,7 +123,8 @@ void drive_to_dummy() {
     digitalWrite(trigPin, LOW);
     echo_duration = pulseIn(echoPin, HIGH);
     distance = echo_duration * 3.4 / 20;
-    if (distance < 150 && search_area) { arrived = true; leftSpeed = 0; rightSpeed = 0; }
+    if (distance < 150 && search_area) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
+    else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   }
 }
 
