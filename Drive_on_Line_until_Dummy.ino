@@ -16,6 +16,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Create Global variables
 bool accel = true, decel = false, over_ramp = false, dummy_reached = false;
+float x, y, z;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A1, pt2_Pin = A2;
 int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
@@ -76,7 +77,7 @@ void loop() {
   rightMotor->setSpeed(rightSpeed);
   leftMotor->run(FORWARD);
   rightMotor->run(FORWARD);
-  if (IMU.accelerationAvailable()) IMU.readAcceleration(float x, float y, float z);
+  if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z;);
   if (x > 0.28) over_ramp = true;
   
   if (over_ramp) {
