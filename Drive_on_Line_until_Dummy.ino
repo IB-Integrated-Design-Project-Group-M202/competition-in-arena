@@ -95,7 +95,7 @@ void loop() {
     digitalWrite(trigPin, LOW);
     echo_duration = pulseIn(echoPin, HIGH);
     distance = echo_duration * 3.4 / 20;
-    if (distance < 100) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
+    if (distance < 150) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
   }
   if (!dummy_reached) {
     if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
