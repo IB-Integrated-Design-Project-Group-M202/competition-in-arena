@@ -11,7 +11,7 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 bool aligned = false, gyro_calibrated = false; arrived = false, identified = false;
-unsigned long startMillis = 0, currentMillis = 0, turn_start = 0;
+unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros = 0, elapsedMicros = 0;
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0;
 uint2_t dummy = 0;
@@ -63,7 +63,7 @@ void setup() {
 }
 
 void calibrate_gyro() {
-  while (readings < 10000) {
+  while (readings < 20000) {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
     angle_total += z; readings += 1; angle_offset = angle_total / readings;
   }
@@ -71,12 +71,16 @@ void calibrate_gyro() {
 
 void align_with_dummy() {
   // Turn robot right slowly
-  leftMotor->setSpeed(50);
-  rightMotor->setSpeed(50);
+  leftMotor->setSpeed(51);
+  rightMotor->setSpeed(51);
   leftMotor->run(FORWARD);
   rightMotor->run(BACKWARD);
-  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z); angle_turned += (z - angle_offset)*10/1000;
-  delay(10);
+  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
+  currentMicros = micros();
+  elapsedMicros = currentMicros - lastMicros;
+  angle_turned += (z - angle_offset) * elapsedMicros/1E6 * 180/160.7;
+  delay(50);
+  lastMicros = currentMicros;
 }
 
 void drive_to_dummy() {
