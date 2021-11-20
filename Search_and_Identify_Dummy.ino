@@ -14,7 +14,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 bool gyro_calibrated = false, search_area = false, aligned = false, arrived = false, identified = false;
 unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros = 0, elapsedMicros = 0, elapsedMillis = 0;
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
-int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt1_Max = 0;
+int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
 int i, j;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0, pt1_angle = 0, pt2_angle = 0, dummy_angle = 0;
 uint8_t dummy = 0;
