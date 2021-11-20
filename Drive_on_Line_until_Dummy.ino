@@ -1,6 +1,7 @@
 /* Pragash Mohanarajah (C) November 2021. */
 
 #include <Adafruit_MotorShield.h>
+#include <Arduino_LSM6DS3.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
