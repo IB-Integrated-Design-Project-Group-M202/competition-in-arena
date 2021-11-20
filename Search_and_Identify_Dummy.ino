@@ -1,4 +1,4 @@
-/* Pragash Mohanarajah (C) November 2021. */
+ /* Pragash Mohanarajah (C) November 2021. */
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
@@ -70,12 +70,13 @@ void calibrate_gyro() {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
     angle_total += z; readings += 1; angle_offset = angle_total / readings;
   }
+  gyro_calibrated = true;
 }
 
 void align_with_dummy() {
   // Turn robot right slowly
-  leftMotor->setSpeed(51);
-  rightMotor->setSpeed(51);
+  leftMotor->setSpeed(60);
+  rightMotor->setSpeed(60);
   leftMotor->run(FORWARD);
   rightMotor->run(BACKWARD);
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
