@@ -1,6 +1,7 @@
 /* Pragash Mohanarajah (C) November 2021. */
 
 #include <Adafruit_MotorShield.h>
+#include <Arduino_LSM6DS3.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
@@ -10,11 +11,12 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-bool aligned = false, gyro_calibrated = false; arrived = false, identified = false;
-unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros = 0, elapsedMicros = 0;
-const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000;
+bool aligned = false, gyro_calibrated = false, arrived = false, identified = false;
+unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros = 0, elapsedMicros = 0, elapsedMillis = 0;
+const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 576;
+int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0;
-uint2_t dummy = 0;
+uint8_t dummy = 0;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -63,6 +65,7 @@ void setup() {
 }
 
 void calibrate_gyro() {
+  int readings;
   while (readings < 20000) {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
     angle_total += z; readings += 1; angle_offset = angle_total / readings;
@@ -93,7 +96,7 @@ void identify_dummy() {
 
 void loop() {
   currentMillis = millis();
-  time_elapsed = currentMillis - startMillis;
+  elapsedMillis = currentMillis - startMillis;
   if (!gyro_calibrated && !aligned) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
