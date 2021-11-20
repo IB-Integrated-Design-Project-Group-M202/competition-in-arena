@@ -14,7 +14,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 
 // Create Global variables
-bool accel = true, decel = false;
+bool accel = true, decel = false, dummy_reached = false;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A1, pt2_Pin = A2;
 int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
@@ -64,6 +64,8 @@ void loop() {
   rightSensorStatus = digitalRead(rightLineSensor);
   leftMotor->setSpeed(leftSpeed);
   rightMotor->setSpeed(rightSpeed);
+  leftMotor->run(FORWARD);
+  rightMotor->run(FORWARD);
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
@@ -74,8 +76,7 @@ void loop() {
   if (readIndex >= numReadings) {
     readIndex = 0;
     average = total / numReadings;
-    Serial.println(average);
-    if (pt_Max > 800) leftMotor->run(RELEASE); rightMotor->run(RELEASE);
+    if (pt_Max > 800) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
     delay(12);
   }
   
@@ -94,33 +95,31 @@ void loop() {
     digitalWrite(trigPin, LOW);
     echo_duration = pulseIn(echoPin, HIGH);
     distance = echo_duration * 3.4 / 20;
-    if (distance < 150) decel = true;
+    if (distance < 100) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
   }
-  if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
-    if (leftSpeed != rightSpeed) {
-      leftSpeed = (leftSpeed + rightSpeed) / 2;
-      rightSpeed = (leftSpeed + rightSpeed) / 2;
+  if (!dummy_reached) {
+    if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
+      if (leftSpeed != rightSpeed) {
+        leftSpeed = (leftSpeed + rightSpeed) / 2;
+        rightSpeed = (leftSpeed + rightSpeed) / 2;
+      } else
+      if (leftSpeed == rightSpeed) if (!decel) leftSpeed = 255; rightSpeed = 255;
     } else
-    if (leftSpeed == rightSpeed) if (leftSpeed < 255 || rightSpeed < 255) if (!decel) accel = true;
-  } else
-  if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-    leftSpeed += 51; rightSpeed -= 51;
-  } else
-  if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-    leftSpeed -= 51; rightSpeed += 51;
-  }
-  if (accel) {
-    if (leftSpeed < 255) leftSpeed += 51;
-    if (rightSpeed < 255) rightSpeed += 51;
-    if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
-    leftMotor->run(FORWARD);
-    rightMotor->run(FORWARD);
-  }
-  if (decel) {
-    if (leftSpeed > 0) leftSpeed -= 51;
-    if (rightSpeed > 0) rightSpeed -= 51;
-    if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
-    leftMotor->run(FORWARD);
-    rightMotor->run(FORWARD);
+    if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
+      leftSpeed += 51; rightSpeed -= 51;
+    } else
+    if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
+      leftSpeed -= 51; rightSpeed += 51;
+    }
+    if (accel) {
+      if (leftSpeed < 255) leftSpeed += 51;
+      if (rightSpeed < 255) rightSpeed += 51;
+      if (leftSpeed == 255 && rightSpeed == 255) accel = !accel;
+    }
+    if (decel) {
+      if (leftSpeed > 0) leftSpeed -= 51;
+      if (rightSpeed > 0) rightSpeed -= 51;
+      if (leftSpeed == 0 && rightSpeed == 0) decel = !decel;
+    }
   }
 }
