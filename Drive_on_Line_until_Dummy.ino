@@ -77,7 +77,7 @@ void loop() {
   rightMotor->setSpeed(rightSpeed);
   leftMotor->run(FORWARD);
   rightMotor->run(FORWARD);
-  if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z;);
+  if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (x > 0.28) over_ramp = true;
   
   total = total - readings[readIndex];
