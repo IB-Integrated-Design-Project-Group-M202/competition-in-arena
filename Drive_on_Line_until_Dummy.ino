@@ -89,7 +89,7 @@ void loop() {
   if (readIndex >= numReadings) {
     readIndex = 0;
     average = total / numReadings;
-    if (pt_Max > 800 && over_ramp) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
+    if (pt_Max > 800 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
     delay(12);
   }
   
@@ -108,7 +108,7 @@ void loop() {
     digitalWrite(trigPin, LOW);
     echo_duration = pulseIn(echoPin, HIGH);
     distance = echo_duration * 3.4 / 20;
-    if (distance < 150 && over_ramp) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
+    if (distance < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
   }
   
   if (!dummy_reached) {
@@ -117,7 +117,7 @@ void loop() {
         leftSpeed = (leftSpeed + rightSpeed) / 2;
         rightSpeed = (leftSpeed + rightSpeed) / 2;
       } else
-      if (leftSpeed == rightSpeed) if (!decel) leftSpeed = 255; rightSpeed = 255;
+      if (leftSpeed == rightSpeed && !decel) { leftSpeed = 255; rightSpeed = 255; }
     } else
     if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
       leftSpeed += 51; rightSpeed -= 51;
