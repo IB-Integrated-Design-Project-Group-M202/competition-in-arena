@@ -80,19 +80,17 @@ void loop() {
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z;);
   if (x > 0.28) over_ramp = true;
   
-  if (over_ramp) {
-    total = total - readings[readIndex];
-    readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
-    if (readings[readIndex] < pt_Min && readings[readIndex] > 20) pt_Min = readings[readIndex];
-    if (readings[readIndex] > pt_Max && readings[readIndex] < 1000) pt_Max = readings[readIndex];
-    total = total + readings[readIndex];
-    readIndex = readIndex + 1;
-    if (readIndex >= numReadings) {
-      readIndex = 0;
-      average = total / numReadings;
-      if (pt_Max > 800) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
-      delay(12);
-    }
+  total = total - readings[readIndex];
+  readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
+  if (readings[readIndex] < pt_Min && readings[readIndex] > 20) pt_Min = readings[readIndex];
+  if (readings[readIndex] > pt_Max && readings[readIndex] < 1000) pt_Max = readings[readIndex];
+  total = total + readings[readIndex];
+  readIndex = readIndex + 1;
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+    average = total / numReadings;
+    if (pt_Max > 800 && over_ramp) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
+    delay(12);
   }
   
   if (time_elapsed >= amberLED_duration) {
@@ -105,14 +103,12 @@ void loop() {
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
     
-    if (over_ramp) {
-      digitalWrite(trigPin, HIGH);
-      delay(trigger_duration);
-      digitalWrite(trigPin, LOW);
-      echo_duration = pulseIn(echoPin, HIGH);
-      distance = echo_duration * 3.4 / 20;
-      if (distance < 150) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
-    }
+    digitalWrite(trigPin, HIGH);
+    delay(trigger_duration);
+    digitalWrite(trigPin, LOW);
+    echo_duration = pulseIn(echoPin, HIGH);
+    distance = echo_duration * 3.4 / 20;
+    if (distance < 150 && over_ramp) dummy_reached = true; leftSpeed = 0; rightSpeed = 0;
   }
   
   if (!dummy_reached) {
