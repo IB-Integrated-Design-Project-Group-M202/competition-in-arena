@@ -16,7 +16,7 @@ unsigned long startMillis = 0, currentMillis = 0, currentMicros = 0, lastMicros 
 const int r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt1_Max = 0;
 int i, j;
-float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0;
+float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0, pt1_angle = 0, pt2_angle = 0, dummy_angle = 0;
 uint8_t dummy = 0;
 
 void setup() {
@@ -78,9 +78,9 @@ void pt_reading() {
   pt1_total -= pt1_readings[readIndex]; pt2_total -= pt2_readings[readIndex];
   pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
   if (pt1_readings[readIndex] < pt1_Min && pt1_readings[readIndex] > 20) pt1_Min = pt1_readings[readIndex];
-  if (pt1_readings[readIndex] > pt1_Max && pt1_readings[readIndex] < 1000) pt1_Max = pt1_readings[readIndex];
+  if (pt1_readings[readIndex] > pt1_Max && pt1_readings[readIndex] < 1000) pt1_Max = pt1_readings[readIndex]; else i += 1;
   if (pt2_readings[readIndex] < pt2_Min && pt2_readings[readIndex] > 20) pt2_Min = pt2_readings[readIndex];
-  if (pt2_readings[readIndex] > pt2_Max && pt2_readings[readIndex] < 1000) pt2_Max = pt2_readings[readIndex];
+  if (pt2_readings[readIndex] > pt2_Max && pt2_readings[readIndex] < 1000) pt2_Max = pt2_readings[readIndex]; else j += 1;
   pt1_total += pt1_readings[readIndex]; pt2_total += pt2_readings[readIndex];
   readIndex += 1;
   if (readIndex >= numReadings) {
@@ -94,13 +94,19 @@ void align_with_dummy() {
   // Turn robot right slowly
   leftMotor->setSpeed(60);
   rightMotor->setSpeed(60);
-  leftMotor->run(FORWARD);
-  rightMotor->run(BACKWARD);
+  if (dummy_angle == 0) {
+    leftMotor->run(BACKWARD); rightMotor->run(FORWARD);
+  } else {
+    if (abs(angle_turned - dummy_angle) <= 0.5) {
+      leftMotor->run(RELEASE); rightMotor->run(RELEASE);
+    } else { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
+  }
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
   currentMicros = micros();
   elapsedMicros = currentMicros - lastMicros;
   if (elapsedMicros >= 50000) angle_turned += (z - angle_offset) * elapsedMicros/1E6 * 180/160.7;
-  pt_reading();
+  if (i >= 3) pt1_angle = angle_turned; if (j >= 3) pt2_angle = angle_turned;
+  if (pt1_angle == 0 || pt2_angle == 0) pt_reading(); else dummy_angle = (pt1_angle + pt2_angle) / 2;
   lastMicros = currentMicros;
 }
 
