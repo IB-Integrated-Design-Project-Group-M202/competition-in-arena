@@ -149,7 +149,7 @@ void loop() {
     distance = echo_duration * 3.4 / 20;
   }
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
-  if (x > 0.28) search_area = true;
+  if (y > 0.20) search_area = true;
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
   if (gyroMillis >= 50) angle_turned += (z - angle_offset) * gyroMillis/1E3 * 180/160.7;
   last_gyro = millis();
