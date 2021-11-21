@@ -11,11 +11,11 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-bool gyro_calibrated = false, search_area = false, aligned = false, arrived = false, identified = false;
+bool gyro_calibrated = false, search_area = false, pt1_maximum = false, pt2_maximum = false, aligned = false, arrived = false, identified = false;
 unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, amberLED_Millis = 0, last_gyro = 0, last_amber = 0;
-const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 115;
+const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 150;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
-int i, j, amberLED_State = LOW, distance, gyroMillis = 0;
+int amberLED_State = LOW, distance, gyroMillis = 0;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0, pt1_angle = 0, pt2_angle = 0, dummy_angle = 0;
 uint8_t dummy = 0, echo_duration = 0, amberLED_duration = 250, trigger_duration = 10;
 
@@ -78,15 +78,21 @@ void calibrate_gyro() {
   gyro_calibrated = true;
 }
 
-void pt_reading() {
+void pt_maxima() {
+  pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
+  if (pt1_readings[readIndex] > pt1_Max) pt1_Max = pt1_readings[readIndex];
+  else { if (pt1_readings[readIndex] < pt1_readings[readIndex - 5]) pt1_maximum = true; }
+  if (pt2_readings[readIndex] > pt2_Max) pt2_Max = pt2_readings[readIndex];
+  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 5]) pt2_maximum = true;}
+}
+
+void pt_average() {
   pt1_total = pt1_total - pt1_readings[readIndex]; pt2_total = pt2_total - pt2_readings[readIndex];
   pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
   pt1_total = pt1_total + pt1_readings[readIndex]; pt2_total = pt2_total + pt2_readings[readIndex];
   readIndex += 1;
   if (readIndex >= numReadings) {
     readIndex = 0;
-    if (pt1_total / numReadings < pt1_average) i += 1;
-    if (pt2_total / numReadings < pt2_average) j += 1;
     pt1_average = pt1_total / numReadings; pt2_average = pt2_total / numReadings;
     delay(12);
   }
@@ -103,8 +109,8 @@ void align_with_dummy() {
       leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true;
     } else { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
   }
-  if (i >= 3) pt1_angle = angle_turned; if (j >= 3) pt2_angle = angle_turned;
-  if (pt1_angle == 0 || pt2_angle == 0) pt_reading(); else dummy_angle = (pt1_angle + pt2_angle) / 2;
+  if (pt1_maximum) pt1_angle = angle_turned; if (pt2_maximum) pt2_angle = angle_turned;
+  if (pt1_angle == 0 || pt2_angle == 0) pt_maxima(); else dummy_angle = (pt1_angle + pt2_angle) / 2;
 }
 
 void drive_to_dummy() {
