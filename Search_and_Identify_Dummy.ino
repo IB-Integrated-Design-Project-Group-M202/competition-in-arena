@@ -81,9 +81,9 @@ void calibrate_gyro() {
 void pt_maxima() {
   pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
   if (pt1_readings[readIndex] > pt1_Max) pt1_Max = pt1_readings[readIndex];
-  else { if (pt1_readings[readIndex] < pt1_readings[readIndex - 5]) pt1_maximum = true; }
+  else { if (pt1_readings[readIndex] < pt1_readings[readIndex - 2]) pt1_maximum = true; }
   if (pt2_readings[readIndex] > pt2_Max) pt2_Max = pt2_readings[readIndex];
-  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 5]) pt2_maximum = true; }
+  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 2]) pt2_maximum = true; }
   if (pt1_maximum) pt1_angle = angle_turned;
   if (pt2_maximum) pt2_angle = angle_turned;
   readIndex += 1;
@@ -127,11 +127,6 @@ void drive_to_dummy() {
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
     
-    digitalWrite(trigPin, HIGH);
-    delay(trigger_duration);
-    digitalWrite(trigPin, LOW);
-    echo_duration = pulseIn(echoPin, HIGH);
-    distance = echo_duration * 3.4 / 20;
     if (distance < 150 && search_area) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
     else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   }
@@ -146,6 +141,13 @@ void loop() {
   elapsedMillis = currentMillis - startMillis;
   gyroMillis = currentMillis - last_gyro;
   amberLED_Millis = currentMillis - last_amber;
+  if (amberLED_Millis >= amberLED_duration) {
+    digitalWrite(trigPin, HIGH);
+    delay(trigger_duration);
+    digitalWrite(trigPin, LOW);
+    echo_duration = pulseIn(echoPin, HIGH);
+    distance = echo_duration * 3.4 / 20;
+  }
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (x > 0.28) search_area = true;
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
