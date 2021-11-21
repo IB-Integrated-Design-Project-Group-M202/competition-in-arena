@@ -75,17 +75,21 @@ void calibrate_gyro() {
     if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
     angle_total += z; readings += 1; angle_offset = angle_total / readings;
   }
+  last_gyro = millis();
+  last_amber = millis();
   gyro_calibrated = true;
 }
 
 void pt_maxima() {
-  pt1_readings[readIndex] = analogRead(pt1_Pin); pt2_readings[readIndex] = analogRead(pt2_Pin);
+  if (analogRead(pt1_Pin) > 0) pt1_readings[readIndex] = analogRead(pt1_Pin);
+  if (analogRead(pt2_Pin) > 0) pt2_readings[readIndex] = analogRead(pt2_Pin);
   if (pt1_readings[readIndex] > pt1_Max) pt1_Max = pt1_readings[readIndex];
-  else { if (pt1_readings[readIndex] < pt1_readings[readIndex - 2]) pt1_maximum = true; }
+  if (pt1_readings[readIndex] < pt1_Max && readIndex > 5 && pt1_readings[readIndex - 5] - pt1_readings[readIndex] > 50) pt1_maximum = true;
   if (pt2_readings[readIndex] > pt2_Max) pt2_Max = pt2_readings[readIndex];
-  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 2]) pt2_maximum = true; }
-  if (pt1_maximum) pt1_angle = angle_turned;
-  if (pt2_maximum) pt2_angle = angle_turned;
+  if (pt2_readings[readIndex] < pt2_Max && readIndex > 5 && pt2_readings[readIndex - 5] - pt2_readings[readIndex] > 50) pt2_maximum = true;
+  if (pt1_maximum) { pt1_angle = angle_turned; pt1_maximum = false; }
+  if (pt2_maximum) { pt2_angle = angle_turned; pt2_maximum = false; }
+  if (pt1_angle != 0 && pt2_angle != 0) dummy_angle = (pt1_angle + pt2_angle) / 2; else dummy_angle = 0;
   readIndex += 1;
   if (readIndex >= numReadings) readIndex = 0;
 }
@@ -103,23 +107,24 @@ void pt_average() {
 }
 
 void align_with_dummy() {
+  gyroMillis = currentMillis - last_gyro;
+  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
+  if (gyroMillis >= 50) { angle_turned += (z - angle_offset) * gyroMillis/1E3 * 180/160.7; last_gyro = millis(); }
   // Turn robot right slowly
   leftMotor->setSpeed(60);
   rightMotor->setSpeed(60);
-  if (dummy_angle == 0) {
+  if (!pt1_maximum || !pt2_maximum) {
+    pt_maxima();
     leftMotor->run(BACKWARD); rightMotor->run(FORWARD);
-  } else {
-    if (abs(angle_turned - dummy_angle) <= 0.5) {
-      leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true;
-    } else { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
   }
-  if (pt1_angle == 0 || pt2_angle == 0) pt_maxima(); else dummy_angle = (pt1_angle + pt2_angle) / 2;
+  if (dummy_angle != 0 && abs(angle_turned - dummy_angle) <= 0.5) aligned = true;
 }
 
 void drive_to_dummy() {
+  amberLED_Millis = currentMillis - last_amber;
   if (amberLED_Millis >= amberLED_duration) {
     // save the last time you blinked the LED
-    last_amber = currentMillis;
+    last_amber = millis();
 
     // if the LED is off turn it on and vice-versa:
     if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
@@ -127,7 +132,13 @@ void drive_to_dummy() {
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
     
-    if (distance < 150 && search_area) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
+    digitalWrite(trigPin, HIGH);
+    delay(trigger_duration);
+    digitalWrite(trigPin, LOW);
+    echo_duration = pulseIn(echoPin, HIGH);
+    distance = echo_duration * 3.4 / 20;
+    
+    if (distance < 150 && distance > 50) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
     else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   }
 }
@@ -139,21 +150,9 @@ void identify_dummy() {
 void loop() {
   currentMillis = millis();
   elapsedMillis = currentMillis - startMillis;
-  gyroMillis = currentMillis - last_gyro;
-  amberLED_Millis = currentMillis - last_amber;
-  if (amberLED_Millis >= amberLED_duration) {
-    digitalWrite(trigPin, HIGH);
-    delay(trigger_duration);
-    digitalWrite(trigPin, LOW);
-    echo_duration = pulseIn(echoPin, HIGH);
-    distance = echo_duration * 3.4 / 20;
-  }
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (y > 0.20) search_area = true;
-  if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
-  if (gyroMillis >= 50) angle_turned += (z - angle_offset) * gyroMillis/1E3 * 180/160.7;
-  last_gyro = millis();
-  if (!gyro_calibrated && !aligned) calibrate_gyro();
+  if (!gyro_calibrated) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
   if (gyro_calibrated && aligned && arrived && !identified) identify_dummy();
