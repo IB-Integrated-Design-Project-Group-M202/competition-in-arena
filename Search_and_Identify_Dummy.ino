@@ -83,7 +83,9 @@ void pt_maxima() {
   if (pt1_readings[readIndex] > pt1_Max) pt1_Max = pt1_readings[readIndex];
   else { if (pt1_readings[readIndex] < pt1_readings[readIndex - 5]) pt1_maximum = true; }
   if (pt2_readings[readIndex] > pt2_Max) pt2_Max = pt2_readings[readIndex];
-  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 5]) pt2_maximum = true;}
+  else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 5]) pt2_maximum = true; }
+  if (pt1_maximum) pt1_angle = angle_turned;
+  if (pt2_maximum) pt2_angle = angle_turned;
 }
 
 void pt_average() {
@@ -109,7 +111,6 @@ void align_with_dummy() {
       leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true;
     } else { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
   }
-  if (pt1_maximum) pt1_angle = angle_turned; if (pt2_maximum) pt2_angle = angle_turned;
   if (pt1_angle == 0 || pt2_angle == 0) pt_maxima(); else dummy_angle = (pt1_angle + pt2_angle) / 2;
 }
 
