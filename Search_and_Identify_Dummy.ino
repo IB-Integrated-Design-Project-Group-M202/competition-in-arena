@@ -2,6 +2,7 @@
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
+#include <HCSR04.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
@@ -15,9 +16,10 @@ bool gyro_calibrated = false, search_area = false, pt1_maximum = false, pt2_maxi
 unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, amberLED_Millis = 0, last_gyro = 0, last_amber = 0;
 const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 150;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
-int amberLED_State = LOW, distance, gyroMillis = 0;
+int amberLED_State = LOW, gyroMillis = 0;
+double* distances;
 float x, y, z, angle_total = 0, angle_offset = 0, angle_turned = 0, pt1_angle = 0, pt2_angle = 0, dummy_angle = 0;
-uint8_t dummy = 0, echo_duration = 0, amberLED_duration = 250, trigger_duration = 10;
+uint8_t dummy = 0;
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -55,10 +57,8 @@ void setup() {
   pinMode(pt2_Pin, INPUT);
   // Configure IR receiver as an analog input_pullup, i.e. with inverted logic with respect to 5V V_CC.
   pinMode(r_Pin, INPUT_PULLUP);
-  // Configure Trigger pin of HC-SR04 as an output
-  pinMode(trigPin, OUTPUT);
-  // Configure Echo pin of HC-SR04 as an input
-  pinMode(echoPin, INPUT);
+  // Configure HC-SR04 Ultrasonic Transducer Distance Sensor
+  HCSR04.begin(trigPin, echoPin);
   // Configure green and red indication LEDs as analog outputs
   pinMode(greenLED_Pin, OUTPUT);
   pinMode(redLED_Pin, OUTPUT);
@@ -121,6 +121,8 @@ void align_with_dummy() {
 }
 
 void drive_to_dummy() {
+  const uint8_t amberLED_duration = 250, trigger_duration = 10;
+  uint8_t echo_duration = 0;
   amberLED_Millis = currentMillis - last_amber;
   if (amberLED_Millis >= amberLED_duration) {
     // save the last time you blinked the LED
@@ -131,14 +133,9 @@ void drive_to_dummy() {
 
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
+    distances = HCSR04.measureDistanceMm();
     
-    digitalWrite(trigPin, HIGH);
-    delay(trigger_duration);
-    digitalWrite(trigPin, LOW);
-    echo_duration = pulseIn(echoPin, HIGH);
-    distance = echo_duration * 3.4 / 20;
-    
-    if (distance < 150 && distance > 50) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
+    if (distances[0] < 150) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
     else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   }
 }
