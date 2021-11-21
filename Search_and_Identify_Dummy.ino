@@ -86,6 +86,8 @@ void pt_maxima() {
   else { if (pt2_readings[readIndex] < pt2_readings[readIndex - 5]) pt2_maximum = true; }
   if (pt1_maximum) pt1_angle = angle_turned;
   if (pt2_maximum) pt2_angle = angle_turned;
+  readIndex += 1;
+  if (readIndex >= numReadings) readIndex = 0;
 }
 
 void pt_average() {
