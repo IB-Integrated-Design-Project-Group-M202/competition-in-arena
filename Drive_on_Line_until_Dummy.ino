@@ -16,7 +16,7 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 
 // Create Global variables
-bool accel = true, decel = false, over_ramp = false, dummy_reached = false;
+bool accel = true, decel = false, over_ramp = false, on_line = true, dummy_reached = false;
 float x, y, z;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A1, pt2_Pin = A2;
@@ -83,6 +83,8 @@ void loop() {
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (y > 0.20) over_ramp = true;
   distances = HCSR04.measureDistanceMm();
+  if (distances[0] > 0 && distances[0] < 150 && over_ramp) { Serial.println(0); dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
+  if (pt_Max > 800 && over_ramp) { Serial.println(1); dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
@@ -106,22 +108,21 @@ void loop() {
 
       // set the LED with the ledState of the variable:
       digitalWrite(amberLED_Pin, amberLED_State);
-    
-      if (distances[0] < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
-      if (pt_Max > 800 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
     }
     if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
+      on_line = true;
       if (leftSpeed != rightSpeed) {
         leftSpeed = (leftSpeed + rightSpeed) / 2;
         rightSpeed = (leftSpeed + rightSpeed) / 2;
       } else
       if (leftSpeed == rightSpeed && !decel) { leftSpeed = 255; rightSpeed = 255; }
     } else
-    if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-      leftSpeed += 51; rightSpeed -= 51;
+    if (leftSensorStatus == HIGH || rightSensorStatus == HIGH) on_line = false;
+    if (!on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
+      leftSpeed += 51; rightSpeed -= 51; delay(50);
     } else
-    if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-      leftSpeed -= 51; rightSpeed += 51;
+    if (!on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
+      leftSpeed -= 51; rightSpeed += 51; delay(50);
     }
     if (accel) {
       if (leftSpeed < 255) leftSpeed += 51;
