@@ -125,6 +125,11 @@ void drive_to_dummy() {
   const uint8_t amberLED_duration = 250, trigger_duration = 10;
   uint8_t echo_duration = 0;
   amberLED_Millis = currentMillis - last_amber;
+  distances = HCSR04.measureDistanceMm();
+  
+  if (distances[0] < 150) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
+  else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
+  
   if (amberLED_Millis >= amberLED_duration) {
     // save the last time you blinked the LED
     last_amber = millis();
@@ -134,10 +139,6 @@ void drive_to_dummy() {
 
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
-    distances = HCSR04.measureDistanceMm();
-    
-    if (distances[0] < 150) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
-    else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   }
 }
 
