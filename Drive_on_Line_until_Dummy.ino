@@ -93,24 +93,23 @@ void loop() {
   if (readIndex >= numReadings) {
     readIndex = 0;
     average = total / numReadings;
-    if (pt_Max > 800 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
     delay(12);
   }
   
-  if (time_elapsed >= amberLED_duration) {
-    // save the last time you blinked the LED
-    amberLED_Millis = currentMillis;
-
-    // if the LED is off turn it on and vice-versa:
-    if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
-
-    // set the LED with the ledState of the variable:
-    digitalWrite(amberLED_Pin, amberLED_State);
-    
-    if (distances[0] < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
-  }
-  
   if (!dummy_reached) {
+    if (time_elapsed >= amberLED_duration) {
+      // save the last time you blinked the LED
+      amberLED_Millis = currentMillis;
+
+      // if the LED is off turn it on and vice-versa:
+      if (amberLED_State == LOW) amberLED_State = HIGH; else amberLED_State = LOW;
+
+      // set the LED with the ledState of the variable:
+      digitalWrite(amberLED_Pin, amberLED_State);
+    
+      if (distances[0] < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
+      if (pt_Max > 800 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
+    }
     if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
       if (leftSpeed != rightSpeed) {
         leftSpeed = (leftSpeed + rightSpeed) / 2;
