@@ -60,6 +60,9 @@ void setup() {
   pinMode(amberLED_Pin, OUTPUT);
   // Configure HC-SR04 Ultrasonic Transducer Distance Sensor
   HCSR04.begin(trigPin, echoPin);
+  // Configure Left and Right Line Sensors as inputs
+  pinMode(leftLineSensor, INPUT);
+  pinMode(rightLineSensor, INPUT);
   // Configure Phototransistors as inputs
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
@@ -78,7 +81,7 @@ void loop() {
   leftMotor->run(FORWARD);
   rightMotor->run(FORWARD);
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
-  if (x > 0.28) over_ramp = true;
+  if (y > 0.20) over_ramp = true;
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
