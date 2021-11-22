@@ -12,7 +12,7 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // Select and configure port M2
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-bool gyro_calibrated = false, search_area = false, pt1_maximum = false, pt2_maximum = false, aligned = false, arrived = false, identified = false;
+bool gyro_calibrated = false, search_area = false, pt1_maximum = false, pt2_maximum = false, pt1_recorded = false, pt2_recorded = false, aligned = false, arrived = false, identified = false;
 unsigned long startMillis = 0, currentMillis = 0, elapsedMillis = 0, amberLED_Millis = 0, last_gyro = 0, last_amber = 0;
 const int echoPin = 2, trigPin = 3, r_Pin = A0, pt1_Pin = A1, pt2_Pin = A2, amberLED_Pin = 8, greenLED_Pin = 12, redLED_Pin = 13, indicatorDelay = 5000, numReadings = 150;
 int pt1_readings[numReadings], pt2_readings[numReadings], readIndex = 0, pt1_total = 0, pt2_total = 0, pt1_average = 0, pt2_average = 0, pt1_Min = 1023, pt2_Min = 1023, pt1_Max = 0, pt2_Max = 0;
@@ -87,8 +87,8 @@ void pt_maxima() {
   if (pt1_readings[readIndex] < pt1_Max && readIndex > 5 && pt1_readings[readIndex - 5] - pt1_readings[readIndex] > 50) pt1_maximum = true;
   if (pt2_readings[readIndex] > pt2_Max) pt2_Max = pt2_readings[readIndex];
   if (pt2_readings[readIndex] < pt2_Max && readIndex > 5 && pt2_readings[readIndex - 5] - pt2_readings[readIndex] > 50) pt2_maximum = true;
-  if (pt1_maximum) { pt1_angle = angle_turned; pt1_maximum = false; }
-  if (pt2_maximum) { pt2_angle = angle_turned; pt2_maximum = false; }
+  if (pt1_maximum && !pt1_recorded) { pt1_angle = angle_turned; pt1_maximum = false; pt1_recorded = true; }
+  if (pt2_maximum && !pt2_recorded) { pt2_angle = angle_turned; pt2_maximum = false; pt2_recorded = true; }
   if (pt1_angle != 0 && pt2_angle != 0) dummy_angle = (pt1_angle + pt2_angle) / 2; else dummy_angle = 0;
   readIndex += 1;
   if (readIndex >= numReadings) readIndex = 0;
@@ -111,23 +111,25 @@ void align_with_dummy() {
   if (IMU.gyroscopeAvailable()) IMU.readGyroscope(x, y, z);
   if (gyroMillis >= 50) { angle_turned += (z - angle_offset) * gyroMillis/1E3 * 180/160.7; last_gyro = millis(); }
   // Turn robot right slowly
-  leftMotor->setSpeed(60);
-  rightMotor->setSpeed(60);
+  leftMotor->setSpeed(80);
+  rightMotor->setSpeed(80);
   if (!pt1_maximum || !pt2_maximum) {
     pt_maxima();
     leftMotor->run(BACKWARD); rightMotor->run(FORWARD);
   }
-  if (dummy_angle != 0 && angle_turned != dummy_angle) { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
-  if (dummy_angle != 0 && abs(angle_turned - dummy_angle) <= 0.5) { leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true; }
+  if (dummy_angle != 0) {
+    if (angle_turned > dummy_angle) { leftMotor->setSpeed(80); rightMotor->setSpeed(80); leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
+    if (angle_turned < dummy_angle) { leftMotor->setSpeed(80); rightMotor->setSpeed(80); leftMotor->run(BACKWARD); rightMotor->run(FORWARD); }
+    if (abs(angle_turned - dummy_angle) <= 0.5) { leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true; delay(50); }
+  }
 }
 
 void drive_to_dummy() {
   const uint8_t amberLED_duration = 250, trigger_duration = 10;
   uint8_t echo_duration = 0;
   amberLED_Millis = currentMillis - last_amber;
-  distances = HCSR04.measureDistanceMm();
   
-  if (distances[0] < 150) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
+  if (distances[0] > 0 && distances[0] < 150) { arrived = true; leftMotor->run(RELEASE); rightMotor->run(RELEASE); }
   else { leftMotor->setSpeed(255); rightMotor->setSpeed(255); leftMotor->run(FORWARD); rightMotor->run(FORWARD); }
   
   if (amberLED_Millis >= amberLED_duration) {
@@ -151,6 +153,7 @@ void loop() {
   elapsedMillis = currentMillis - startMillis;
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (y > 0.20) search_area = true;
+  distances = HCSR04.measureDistanceMm();
   if (!gyro_calibrated) calibrate_gyro();
   if (gyro_calibrated && !aligned) align_with_dummy();
   if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
