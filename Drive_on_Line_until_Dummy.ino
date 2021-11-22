@@ -2,6 +2,7 @@
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
+#include <HCSR04.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
@@ -19,7 +20,8 @@ bool accel = true, decel = false, over_ramp = false, dummy_reached = false;
 float x, y, z;
 unsigned long amberLED_Millis = 0, currentMillis = 0, time_elapsed = 0, echo_duration = 0;
 const int echoPin = 2, trigPin = 3, leftLineSensor = 4, rightLineSensor = 7, amberLED_Pin = 8, numReadings = 576, pt1_Pin = A1, pt2_Pin = A2;
-int distance = 0, amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
+int amberLED_State = LOW, leftSensorStatus = LOW, rightSensorStatus = LOW, readings[numReadings], readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
+double* distances;
 uint8_t leftSpeed = 0, rightSpeed = 0, amberLED_duration = 250, trigger_duration = 10;
 
 void setup() {
@@ -56,10 +58,8 @@ void setup() {
   }
   // Configure LED pin as an output
   pinMode(amberLED_Pin, OUTPUT);
-  // Configure Trigger pin of HC-SR04 as an output
-  pinMode(trigPin, OUTPUT);
-  // Configure Echo pin of HC-SR04 as an input
-  pinMode(echoPin, INPUT);
+  // Configure HC-SR04 Ultrasonic Transducer Distance Sensor
+  HCSR04.begin(trigPin, echoPin);
   // Configure Phototransistors as inputs
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
@@ -103,12 +103,8 @@ void loop() {
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
     
-    digitalWrite(trigPin, HIGH);
-    delay(trigger_duration);
-    digitalWrite(trigPin, LOW);
-    echo_duration = pulseIn(echoPin, HIGH);
-    distance = echo_duration * 3.4 / 20;
-    if (distance < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
+    distances = HCSR04.measureDistanceMm();
+    if (distances[0] < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
   }
   
   if (!dummy_reached) {
