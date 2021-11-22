@@ -117,7 +117,8 @@ void align_with_dummy() {
     pt_maxima();
     leftMotor->run(BACKWARD); rightMotor->run(FORWARD);
   }
-  if (dummy_angle != 0 && abs(angle_turned - dummy_angle) <= 0.5) aligned = true;
+  if (dummy_angle != 0 && angle_turned != dummy_angle) { leftMotor->run(FORWARD); rightMotor->run(BACKWARD); }
+  if (dummy_angle != 0 && abs(angle_turned - dummy_angle) <= 0.5) { leftMotor->run(RELEASE); rightMotor->run(RELEASE); aligned = true; }
 }
 
 void drive_to_dummy() {
