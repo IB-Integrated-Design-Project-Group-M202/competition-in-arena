@@ -82,6 +82,7 @@ void loop() {
   rightMotor->run(FORWARD);
   if (IMU.accelerationAvailable()) IMU.readAcceleration(x, y, z);
   if (y > 0.20) over_ramp = true;
+  distances = HCSR04.measureDistanceMm();
   
   total = total - readings[readIndex];
   readings[readIndex] = (analogRead(pt1_Pin) + analogRead(pt2_Pin)) / 2;
@@ -106,7 +107,6 @@ void loop() {
     // set the LED with the ledState of the variable:
     digitalWrite(amberLED_Pin, amberLED_State);
     
-    distances = HCSR04.measureDistanceMm();
     if (distances[0] < 150 && over_ramp) { dummy_reached = true; leftSpeed = 0; rightSpeed = 0; }
   }
   
