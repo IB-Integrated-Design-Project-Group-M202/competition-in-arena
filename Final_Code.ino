@@ -26,7 +26,7 @@ int leftSensorStatus = LOW, rightSensorStatus = LOW;
 #define pt1_Pin A1
 #define pt2_Pin A2
 #define TSOP //<-------------------------------------------------------------specify PIN and name if needed and other stuff
-int numReadings = 576;
+const int numReadings = 576;
 int readings[numReadings];
 int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 
