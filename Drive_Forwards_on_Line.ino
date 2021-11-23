@@ -62,10 +62,10 @@ void loop() {
   } else
   if (leftSensorStatus == HIGH || rightSensorStatus == HIGH) on_line = false;
   if (!on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-    leftSpeed -= 51; delay(50);
+    leftSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
   } else
   if (!on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-    rigbtSpeed -= 51; delay(50);
+    rigbtSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
   }
   if (accel) {
     if (leftSpeed < 255) leftSpeed += 51;
