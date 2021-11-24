@@ -59,6 +59,8 @@ void update_motors() {
   rightMotor->setSpeed(rightSpeed);
   leftMotor->run(leftDirection);
   rightMotor->run(rightDirection);
+  leftSensorStatus = digitalRead(leftLineSensor);
+  rightSensorStatus = digitalRead(rightLineSensor);
 }
 
 void update_location() {
