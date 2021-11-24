@@ -3,37 +3,36 @@
 #include <HCSR04.h>
 
 
-//Global variables for state of the robot
+// Global variables for state of the robot
 int current_time_u, current_time_m;
 bool accel = true, decel = false, over_ramp = false, on_line = true;
 bool dummy_reached = false, on_ramp = false, in_starting_location = true;
 
-//Global variables and definitions for motors
+// Global variables and definitions for motors
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
 Adafruit_DCMotor *leftMotor = AFMS.getMotor(1); // Select and configure port M1
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2); // Select and configure port M2
 uint8_t leftSpeed = 0, rightSpeed = 0, trigger_duration = 10;
 
-//Global variables and definitions for distance sensor
+// Global variables and definitions for distance sensor
 #define echoPin 2
 #define trigPin 3
 double* distances;
 
-//Global variables and definitions for line sensors
+// Global variables and definitions for line sensors
 #define leftLineSensor 4
 #define rightLineSensor 7
 int leftSensorStatus = LOW, rightSensorStatus = LOW;
 
-//Global variables and definitions for IR sensors
+// Global variables and definitions for IR sensors
 #define irr_Pin A0
 #define pt1_Pin A1
 #define pt2_Pin A2
-
 const int numReadings = 576;
 int readings[numReadings];
 int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 
-//Global variables and definitions for LEDs
+// Global variables and definitions for LEDs
 #define amberLED_Pin 8
 #define greenLED_Pin 12
 #define redLED_Pin 13
@@ -41,7 +40,7 @@ uint8_t amberLED_duration = 250;
 int amberLED_State = LOW;
 unsigned int last_time_amber_m = 0;
 
-//Global variables and definitions for IMU
+// Global variables and definitions for IMU
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
@@ -50,17 +49,16 @@ bool gyroscope_on = false;
 unsigned int last_time_gyroscope_u;
 
 //<-----------------------------------------------------------------------------------------------------------------FUNCTIONS
-void update_location(){
+void update_location() {
   // Detection of ramp and whether the robot is in starting location or location of dummies
   // in_starting_location == true means that the robot is in the initial triangle on the table
   // in_starting_location == false means that the robot is in the triangle where the dummies are
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
-    if(on_ramp == false){
-      if(acceleration_x > 0.2)on_ramp = true;
-    }
-    else{
-      if(acceleration_x < -0.2)on_ramp = false;
+    if (on_ramp == false) {
+      if (acceleration_y > 0.2) on_ramp = true;
+    } else {
+      if (acceleration_y < -0.2) on_ramp = false;
       in_starting_location != in_starting_location;
     }
   }
@@ -87,12 +85,11 @@ void gyroscope_reset() {
 }
 
 void integrate_gyroscope() {
-  //It inegrates 
   if (IMU.gyroscopeAvailable()) {
     IMU.readGyroscope(angle_x, angle_y, angle_z);
   }
   unsigned int elapsed_time_u = current_time_u - last_time_gyroscope_u;
-  angle_turned += (angle_z + last_angle_z - 2*angle_offset)/2*elapsed_time_u/1000*180/160.7/1000;
+  angle_turned += (angle_z + last_angle_z - 2*angle_offset)/2*elapsed_time_u*180/160.7/1E6;
   last_time_gyroscope_u = current_time_u;
   last_angle_z = angle_z;
 }
@@ -106,11 +103,11 @@ double measure_distance_mm() {
 void setup() {
   
   // Configure the motor shield
-  while (!AFMS.begin()) {         // Check whether the motor shield is properly connected
+  while (!AFMS.begin()) { // Check whether the motor shield is properly connected
     digitalWrite(redLED_Pin, HIGH);
   }
   
-  //Configure IMU
+  // Configure IMU
   while (!IMU.begin()) { // Check whether the IMU works
     digitalWrite(amberLED_Pin, HIGH);
   }
@@ -156,21 +153,21 @@ void loop() {
   // Time for functions which need accurate data
   current_time_u = micros();
 
-  //Updates in_starting_location and on_ramp
+  // Updates in_starting_location and on_ramp
   update_location(); 
 
-  //Integrates angle if it should
+  // Integrates angle if it should
   if (gyroscope_on == true) {
     integrate_gyroscope();
   }
   
-  //Stops the robot if less than 15cm
+  // Stops the robot if less than 15cm
   if (in_starting_location = false && measure_distance_mm < 150) {
     rightSpeed = 0;
     leftSpeed = 0;
   }
 
-  //Control of the amber light
+  // Control of the amber light
   if (leftSpeed == 0 && rightSpeed == 0) digitalWrite(amberLED_Pin, LOW);
   else if ((current_time_m - last_time_amber_m) >= 250) {
     digitalWrite(amberLED_Pin, !digitalRead(amberLED_Pin));
