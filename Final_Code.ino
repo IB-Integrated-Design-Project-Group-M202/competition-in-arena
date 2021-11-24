@@ -6,7 +6,7 @@
 // Global variables for state of the robot
 int current_time_u, current_time_m;
 bool accel = true, decel = false, over_ramp = false, on_line = true;
-bool dummy_reached = false, on_ramp = false, in_starting_location = true;
+bool dummy_reached = false, on_ramp = false, search_area = false;
 
 // Global variables and definitions for motors
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -51,15 +51,15 @@ unsigned int last_time_gyroscope_u;
 //<-----------------------------------------------------------------------------------------------------------------FUNCTIONS
 void update_location() {
   // Detection of ramp and whether the robot is in starting location or location of dummies
-  // in_starting_location == true means that the robot is in the initial triangle on the table
-  // in_starting_location == false means that the robot is in the triangle where the dummies are
+  // search_area == false means that the robot is in the delivery area
+  // search_area == true means that the robot is in the search area
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
     if (on_ramp == false) {
       if (acceleration_y > 0.2) on_ramp = true;
     } else {
       if (acceleration_y < -0.2) on_ramp = false;
-      in_starting_location != in_starting_location;
+      search_area = !search_area;
     }
   }
 }
