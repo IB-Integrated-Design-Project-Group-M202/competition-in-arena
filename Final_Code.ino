@@ -5,7 +5,7 @@
 // Global variables for state of the robot
 unsigned long current_time_u, current_time_m, start_time_m, finish_time_m = 3E5;
 bool accel = true, decel = false, timeout = false;
-bool on_line = true, on_ramp = false, search_area = false;
+bool on_line = true, left = false, right = false, on_ramp = false, search_area = false;
 bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
 // Global variables and definitions for motors
@@ -106,6 +106,7 @@ void measure_gyroscope() {
 
 void integrate_gyroscope() {
   unsigned int elapsed_time_u = current_time_u - last_time_gyroscope_u;
+  measure_gyroscope();
   angle_turned += (angle_z + last_angle_z - 2*angle_offset)/2*elapsed_time_u*180/160.7/1E6;
   last_time_gyroscope_u = current_time_u;
   last_angle_z = angle_z;
@@ -118,22 +119,17 @@ double measure_distance_mm() {
 
 void drive_on_line() {
   leftDirection = FORWARD; rightDirection = FORWARD;
+  measure_gyroscope();
   if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
-    on_line = true;
-    if (leftSpeed != rightSpeed) {
-      leftSpeed = (leftSpeed + rightSpeed) / 2;
-      rightSpeed = (leftSpeed + rightSpeed) / 2;
-    } else
-    if (leftSpeed == rightSpeed && !decel) { leftSpeed = 255; rightSpeed = 255; }
+    if (on_line) { leftSpeed = 255; rightSpeed = 255; }
   } else
-  if (leftSensorStatus == HIGH || rightSensorStatus == HIGH) on_line = false;
-  if (on_line && angle_z > 0) rightSpeed -= 5;
-  else if (on_line && angle_z < 0) leftSpeed -= 5;
-  if (!on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-    leftSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
+  if (on_line && angle_z > 10) rightSpeed -= 5;
+  else if (on_line && angle_z < -10) leftSpeed -= 5;
+  if (on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
+    leftSpeed -= 51; on_line = false; left = true;
   } else
-  if (!on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-    rightSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
+  if (on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
+    rightSpeed -= 51; on_line = false; right = true;
   }
   if (accel) {
     if (leftSpeed < 255) leftSpeed += 51;
