@@ -2,11 +2,11 @@
 #include <Arduino_LSM6DS3.h>
 #include <HCSR04.h>
 
-
 // Global variables for state of the robot
-int current_time_u, current_time_m;
-bool accel = true, decel = false, over_ramp = false, on_line = true;
-bool dummy_reached = false, on_ramp = false, search_area = false;
+unsigned long current_time_u, current_time_m, start_time_m, finish_time_m = 3E5;
+bool accel = true, decel = false, timeout = false;
+bool on_line = true, on_ramp = false, search_area = false;
+bool dummy_reached = false, aligned = false, arrived = false, identified = false;
 
 // Global variables and definitions for motors
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -31,6 +31,7 @@ int leftSensorStatus = LOW, rightSensorStatus = LOW;
 const int numReadings = 576;
 int readings[numReadings];
 int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
+bool pt1_maximum = false, pt2_maximum = false;
 
 // Global variables and definitions for LEDs
 #define amberLED_Pin 8
@@ -45,10 +46,14 @@ float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
 float angle_turned;
-bool gyroscope_on = false;
+bool gyroscope_angle = false, gyro_calibrated = false;
 unsigned int last_time_gyroscope_u;
 
 //<-----------------------------------------------------------------------------------------------------------------FUNCTIONS
+void check_timeout() {
+  if ((current_time_m - start_time_m) >= 2.4E5) timeout = true;
+}
+
 void update_motors() {
   leftMotor->setSpeed(leftSpeed);
   rightMotor->setSpeed(rightSpeed);
@@ -85,16 +90,18 @@ void gyroscope_reset() {
     readings += 1;
     angle_offset = angle_total / readings;
   }
-  gyroscope_on = true;
   angle_turned = 0;
   last_time_gyroscope_u = micros();
   last_angle_z = angle_z;
 }
 
-void integrate_gyroscope() {
+void measure_gyroscope() {
   if (IMU.gyroscopeAvailable()) {
     IMU.readGyroscope(angle_x, angle_y, angle_z);
   }
+}
+
+void integrate_gyroscope() {
   unsigned int elapsed_time_u = current_time_u - last_time_gyroscope_u;
   angle_turned += (angle_z + last_angle_z - 2*angle_offset)/2*elapsed_time_u*180/160.7/1E6;
   last_time_gyroscope_u = current_time_u;
@@ -118,6 +125,7 @@ void setup() {
   while (!IMU.begin()) { // Check whether the IMU works
     digitalWrite(amberLED_Pin, HIGH);
   }
+  gyroscope_reset();
   
   // Configure Left and Right Motors
   leftMotor->setSpeed(150);
@@ -149,6 +157,7 @@ void setup() {
   digitalWrite(amberLED_Pin, LOW);
   digitalWrite(redLED_Pin, LOW);
   digitalWrite(greenLED_Pin, LOW);
+  start_time_m = millis();
 
 }
 
@@ -161,16 +170,16 @@ void loop() {
   current_time_u = micros();
 
   // Updates all variables
-  update_location(); 
-  update_motors();
-
-  // Integrates angle if it should
-  if (gyroscope_on == true) {
+  check_timeout();
+  update_location();
+  measure_gyroscope();
+  if (gyroscope_angle) { // Integrates angle if it should
     integrate_gyroscope();
   }
+  update_motors();
   
   // Stops the robot if less than 15cm
-  if (in_starting_location = false && measure_distance_mm < 150) {
+  if (!search_area && measure_distance_mm < 150) {
     rightSpeed = 0;
     leftSpeed = 0;
   }
