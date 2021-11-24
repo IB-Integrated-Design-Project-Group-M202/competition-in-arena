@@ -6,7 +6,7 @@
 unsigned long current_time_u, current_time_m, start_time_m, finish_time_m = 3E5;
 bool accel = true, decel = false, timeout = false;
 bool on_line = true, on_ramp = false, search_area = false;
-bool dummy_reached = false, aligned = false, arrived = false, identified = false;
+bool dummy_reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
 // Global variables and definitions for motors
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -145,27 +145,29 @@ void drive_on_line() {
   }
 }
 
-void align_with_dummy() {
-  if (gyro_calibrated) {
-    leftSpeed = 80; rightSpeed = 80;
-    if (!pt1_maximum || !pt2_maximum) pt_maxima();
-    short angle_error = angle_turned - dummy_angle;
-    if (dummy_angle == 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
-    else if (dummy_angle != 0 && angle_error < 0) { leftDirection = FORWARD; rightDirection = BACKWARD; }
-    else if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
-    if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; }
-  }
-}
-
 void drive_to_dummy() {
   unsigned short distance = measure_distance_mm();
-  leftSpeed = 255;
-  rightSpeed = 255;
   if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; }
 }
 
+void drive_on_line_to_dummy() {
+  drive_on_line();
+  drive_to_dummy();
+  if (arrived) { arrived = false; stopped = true; }
+}
+
+void align_with_dummy() {
+  leftSpeed = 80; rightSpeed = 80;
+  if (!pt1_maximum || !pt2_maximum) pt_maxima();
+  short angle_error = angle_turned - dummy_angle;
+  if (dummy_angle == 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
+  else if (dummy_angle != 0 && angle_error < 0) { leftDirection = FORWARD; rightDirection = BACKWARD; }
+  else if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
+  if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; }
+}
+
 void identify_dummy() {
-  
+  dummy_indicator();
 }
 
 void dummy_indicator() {
@@ -254,10 +256,12 @@ void loop() {
   if (!gyro_calibrated) reset_gyroscope();
   measure_gyroscope();
   if (gyroscope_angle) integrate_gyroscope(); // Integrates angle if it should
-  if (gyro_calibrated && !stopped && !search_area) drive_on_line();
-  if (gyro_calibrated && stopped && !aligned) align_with_dummy();
-  if (gyro_calibrated && stopped && aligned && !arrived) drive_to_dummy();
-  if (gyro_calibrated && stopped && aligned && arrived && !identified) identify_dummy();
+  if (gyro_calibrated && !search_area) drive_on_line();
+  if (gyro_calibrated && search_area && !stopped) drive_on_line_to_dummy();
+  if (gyro_calibrated && search_area && stopped && !identifiedLine) identify_dummy();
+  if (gyro_calibrated && search_area && stopped && identifiedLine && !aligned) align_with_dummy();
+  if (gyro_calibrated && search_area && stopped && identifiedLine && aligned && !arrived) drive_to_dummy();
+  if (gyro_calibrated && search_area && stopped && identifiedLine && aligned && arrived && !identifiedArea) identify_dummy();
   update_motors();
   
   // Stops the robot if less than 15cm
@@ -272,5 +276,4 @@ void loop() {
     digitalWrite(amberLED_Pin, !digitalRead(amberLED_Pin));
     last_time_amber_m = current_time_m;
   }
-
 }
