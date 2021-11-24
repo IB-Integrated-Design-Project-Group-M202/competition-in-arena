@@ -109,6 +109,7 @@ void loop() {
       // set the LED with the ledState of the variable:
       digitalWrite(amberLED_Pin, amberLED_State);
     }
+    leftDirection = FORWARD; rightDirection = FORWARD;
     if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
       on_line = true;
       if (leftSpeed != rightSpeed) {
@@ -118,11 +119,13 @@ void loop() {
       if (leftSpeed == rightSpeed && !decel) { leftSpeed = 255; rightSpeed = 255; }
     } else
     if (leftSensorStatus == HIGH || rightSensorStatus == HIGH) on_line = false;
+    if (on_line && angle_z > 0) rightSpeed -= 5;
+    else if (on_line && angle_z < 0) leftSpeed -= 5;
     if (!on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-      leftSpeed += 51; rightSpeed -= 51; delay(50);
+      leftSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
     } else
     if (!on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-      leftSpeed -= 51; rightSpeed += 51; delay(50);
+      rightSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
     }
     if (accel) {
       if (leftSpeed < 255) leftSpeed += 51;
