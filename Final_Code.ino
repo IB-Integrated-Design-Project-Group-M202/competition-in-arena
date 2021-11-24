@@ -93,6 +93,7 @@ void gyroscope_reset() {
   angle_turned = 0;
   last_time_gyroscope_u = micros();
   last_angle_z = angle_z;
+  gyro_calibrated = true;
 }
 
 void measure_gyroscope() {
@@ -111,6 +112,60 @@ void integrate_gyroscope() {
 double measure_distance_mm() {
  double* distances = HCSR04.measureDistanceMm();
  return distances[0];
+}
+
+void drive_on_line() {
+  leftDirection = FORWARD; rightDirection = FORWARD;
+  if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
+    on_line = true;
+    if (leftSpeed != rightSpeed) {
+      leftSpeed = (leftSpeed + rightSpeed) / 2;
+      rightSpeed = (leftSpeed + rightSpeed) / 2;
+    } else
+    if (leftSpeed == rightSpeed && !decel) { leftSpeed = 255; rightSpeed = 255; }
+  } else
+  if (leftSensorStatus == HIGH || rightSensorStatus == HIGH) on_line = false;
+  if (on_line && angle_z > 0) rightSpeed -= 5;
+  else if (on_line && angle_z < 0) leftSpeed -= 5;
+  if (!on_line && leftSensorStatus == HIGH && rightSensorStatus == LOW) {
+    leftSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
+  } else
+  if (!on_line && leftSensorStatus == LOW && rightSensorStatus == HIGH) {
+    rightSpeed -= 51; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); delay(50);
+  }
+  if (accel) {
+    if (leftSpeed < 255) leftSpeed += 51;
+    if (rightSpeed < 255) rightSpeed += 51;
+    if (leftSpeed == 255 && rightSpeed == 255) accel = false;
+  }
+  if (decel) {
+    if (leftSpeed > 0) leftSpeed -= 51;
+    if (rightSpeed > 0) rightSpeed -= 51;
+    if (leftSpeed == 0 && rightSpeed == 0) decel = false;
+  }
+}
+
+void align_with_dummy() {
+  if (gyro_calibrated) {
+    leftSpeed = 80; rightSpeed = 80;
+    if (!pt1_maximum || !pt2_maximum) pt_maxima();
+    short angle_error = angle_turned - dummy_angle;
+    if (dummy_angle == 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
+    else if (dummy_angle != 0 && angle_error < 0) { leftDirection = FORWARD; rightDirection = BACKWARD; }
+    else if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
+    if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; }
+  }
+}
+
+void drive_to_dummy() {
+  unsigned short distance = measure_distance_mm();
+  leftSpeed = 255;
+  rightSpeed = 255;
+  if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; }
+}
+
+void identify_dummy() {
+  
 }
 
 void dummy_indicator() {
@@ -196,15 +251,14 @@ void loop() {
   // Updates all variables
   check_timeout();
   update_location();
-  measure_gyroscope();
-  if (gyroscope_angle) { // Integrates angle if it should
-    integrate_gyroscope();
-  }
-  update_motors();
   if (!gyro_calibrated) reset_gyroscope();
-  if (gyro_calibrated && !aligned) align_with_dummy();
-  if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
-  if (gyro_calibrated && aligned && arrived && !identified) identify_dummy();
+  measure_gyroscope();
+  if (gyroscope_angle) integrate_gyroscope(); // Integrates angle if it should
+  if (gyro_calibrated && !stopped && !search_area) drive_on_line();
+  if (gyro_calibrated && stopped && !aligned) align_with_dummy();
+  if (gyro_calibrated && stopped && aligned && !arrived) drive_to_dummy();
+  if (gyro_calibrated && stopped && aligned && arrived && !identified) identify_dummy();
+  update_motors();
   
   // Stops the robot if less than 15cm
   if (search_area && measure_distance_mm < 150) {
