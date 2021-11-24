@@ -113,6 +113,30 @@ double measure_distance_mm() {
  return distances[0];
 }
 
+void dummy_indicator() {
+  switch (dummy) {
+    case 0:
+      break;
+    case 1:
+      digitalWrite(greenLED_Pin, HIGH);
+      digitalWrite(redLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(greenLED_Pin, LOW);
+      digitalWrite(redLED_Pin, LOW);
+      break;
+    case 2:
+      digitalWrite(redLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(redLED_Pin, LOW);
+      break;
+    case 3:
+      digitalWrite(greenLED_Pin, HIGH);
+      delay(indicatorDelay);
+      digitalWrite(greenLED_Pin, LOW);
+      break;
+  }
+}
+
 //<-------------------------------------------------------------------------------------------------------------SETUP BEGINS
 void setup() {
   
@@ -177,9 +201,13 @@ void loop() {
     integrate_gyroscope();
   }
   update_motors();
+  if (!gyro_calibrated) reset_gyroscope();
+  if (gyro_calibrated && !aligned) align_with_dummy();
+  if (gyro_calibrated && aligned && !arrived) drive_to_dummy();
+  if (gyro_calibrated && aligned && arrived && !identified) identify_dummy();
   
   // Stops the robot if less than 15cm
-  if (!search_area && measure_distance_mm < 150) {
+  if (search_area && measure_distance_mm < 150) {
     rightSpeed = 0;
     leftSpeed = 0;
   }
