@@ -25,17 +25,18 @@ double* distances;
 int leftSensorStatus = LOW, rightSensorStatus = LOW;
 
 //Global variables and definitions for IR sensors
+#define irr_Pin A0
 #define pt1_Pin A1
 #define pt2_Pin A2
-#define TSOP //<-------------------------------------------------------------specify PIN and name if needed and other stuff
+
 const int numReadings = 576;
 int readings[numReadings];
 int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 
 //Global variables and definitions for LEDs
 #define amberLED_Pin 8
-#define greenLED_Pin 9//<-------------------------------------------------------------specify PIN
-#define redLED_Pin 10//<-------------------------------------------------------------specify PIN
+#define greenLED_Pin 12
+#define redLED_Pin 13
 uint8_t amberLED_duration = 250;
 int amberLED_State = LOW;
 unsigned int last_time_amber_m = 0;
@@ -65,9 +66,9 @@ void update_location(){
   }
 }
 
-void gyroscope_reset(){
-  //Gyroscope_reset sets the angle_offset for the gyroscope and initiates variables for integration
-  //It turns the motors off for accurate configuration
+void gyroscope_reset() {
+  // Gyroscope_reset sets the angle_offset for the gyroscope and initiates variables for integration
+  // It turns the motors off for accurate configuration
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
   delay(2000);
@@ -85,19 +86,18 @@ void gyroscope_reset(){
   last_angle_z = angle_z;
 }
 
-void integrate_gyroscope(){
+void integrate_gyroscope() {
   //It inegrates 
   if (IMU.gyroscopeAvailable()) {
     IMU.readGyroscope(angle_x, angle_y, angle_z);
   }
-  current_time_u = micros();
   unsigned int elapsed_time_u = current_time_u - last_time_gyroscope_u;
   angle_turned += (angle_z + last_angle_z - 2*angle_offset)/2*elapsed_time_u/1000*180/160.7/1000;
   last_time_gyroscope_u = current_time_u;
   last_angle_z = angle_z;
 }
 
-double measure_distance_mm(){
+double measure_distance_mm() {
  double* distances = HCSR04.measureDistanceMm();
  return distances[0];
 }
@@ -106,10 +106,16 @@ double measure_distance_mm(){
 void setup() {
   
   // Configure the motor shield
-  if (!AFMS.begin()) {         // Check whether the motor shield is properly connected
-    //<----------------------------------------------------------appropriate signal for disconnected motors, do we need that?
-    while (1);
+  while (!AFMS.begin()) {         // Check whether the motor shield is properly connected
+    digitalWrite(redLED_Pin, HIGH);
   }
+  
+  //Configure IMU
+  while (!IMU.begin()) { // Check whether the IMU works
+    digitalWrite(amberLED_Pin, HIGH);
+  }
+  
+  // Configure Left and Right Motors
   leftMotor->setSpeed(150);
   rightMotor->setSpeed(150);
   leftMotor->run(FORWARD);
@@ -121,18 +127,18 @@ void setup() {
   HCSR04.begin(trigPin, echoPin);
   digitalWrite(trigPin, LOW);
 
-  //Configure line sensors
+  // Configure line sensors
   pinMode(leftLineSensor, INPUT);
   pinMode(rightLineSensor, INPUT);
   
-  //Configure IR sensors
+  // Configure IR sensors
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     readings[thisReading] = 0;
   }
   
-  //Configure LEDs
+  // Configure LEDs
   pinMode(amberLED_Pin, OUTPUT);
   pinMode(redLED_Pin, OUTPUT);
   pinMode(greenLED_Pin, OUTPUT);
@@ -140,37 +146,33 @@ void setup() {
   digitalWrite(redLED_Pin, LOW);
   digitalWrite(greenLED_Pin, LOW);
 
-  //Configure IMU
-  if (!IMU.begin()) { // Check whether the IMU works
-    //<----------------------------------------------------------appropriate signal for failure of IMU, do we need that?
-    while (1);
-  }
-
 }
 
 //<---------------------------------------------------------------------------------------------------------------LOOP BEGINS
 void loop() {  
   
-  //Time for function that do not need accurate data
+  // Time for functions which do not need accurate data
   current_time_m = millis();
+  // Time for functions which need accurate data
+  current_time_u = micros();
 
   //Updates in_starting_location and on_ramp
   update_location(); 
 
   //Integrates angle if it should
-  if(gyroscope_on == true){
+  if (gyroscope_on == true) {
     integrate_gyroscope();
   }
   
   //Stops the robot if less than 15cm
-  if(in_starting_location = false && measure_distance_mm < 150){
+  if (in_starting_location = false && measure_distance_mm < 150) {
     rightSpeed = 0;
     leftSpeed = 0;
   }
 
   //Control of the amber light
-  if(leftSpeed == 0 && rightSpeed == 0)digitalWrite(amberLED_Pin, LOW);
-  else if((current_time_m - last_time_amber_m) > 1000){
+  if (leftSpeed == 0 && rightSpeed == 0) digitalWrite(amberLED_Pin, LOW);
+  else if ((current_time_m - last_time_amber_m) >= 250) {
     digitalWrite(amberLED_Pin, !digitalRead(amberLED_Pin));
     last_time_amber_m = current_time_m;
   }
