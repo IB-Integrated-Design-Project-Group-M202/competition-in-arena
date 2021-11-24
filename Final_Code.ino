@@ -6,7 +6,7 @@
 unsigned long current_time_u, current_time_m, start_time_m, finish_time_m = 3E5;
 bool accel = true, decel = false, timeout = false;
 bool on_line = true, on_ramp = false, search_area = false;
-bool dummy_reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
+bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
 // Global variables and definitions for motors
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
@@ -33,11 +33,11 @@ int readings[numReadings];
 int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
 bool pt1_maximum = false, pt2_maximum = false;
 
-// Global variables and definitions for LEDs
+// Global variables and definitions for LEDs and Dummy Indication
 #define amberLED_Pin 8
 #define greenLED_Pin 12
 #define redLED_Pin 13
-uint8_t amberLED_duration = 250;
+uint8_t amberLED_duration = 250, dummy, indicatorDelay = 1000;
 int amberLED_State = LOW;
 unsigned int last_time_amber_m = 0;
 
@@ -45,7 +45,7 @@ unsigned int last_time_amber_m = 0;
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
-float angle_turned;
+float angle_turned, dummy_angle;
 bool gyroscope_angle = false, gyro_calibrated = false;
 unsigned int last_time_gyroscope_u;
 
@@ -76,8 +76,8 @@ void update_location() {
   }
 }
 
-void gyroscope_reset() {
-  // Gyroscope_reset sets the angle_offset for the gyroscope and initiates variables for integration
+void reset_gyroscope() {
+  // Sets the angle_offset for the gyroscope and initiates variables for integration
   // It turns the motors off for accurate configuration
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
@@ -156,6 +156,10 @@ void drive_on_line_to_dummy() {
   if (arrived) { arrived = false; stopped = true; }
 }
 
+void pt_maxima() {
+  
+}
+
 void align_with_dummy() {
   leftSpeed = 80; rightSpeed = 80;
   if (!pt1_maximum || !pt2_maximum) pt_maxima();
@@ -206,7 +210,7 @@ void setup() {
   while (!IMU.begin()) { // Check whether the IMU works
     digitalWrite(amberLED_Pin, HIGH);
   }
-  gyroscope_reset();
+  reset_gyroscope();
   
   // Configure Left and Right Motors
   leftMotor->setSpeed(150);
