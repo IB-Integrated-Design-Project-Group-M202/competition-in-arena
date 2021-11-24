@@ -12,7 +12,7 @@ bool dummy_reached = false, on_ramp = false, search_area = false;
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
 Adafruit_DCMotor *leftMotor = AFMS.getMotor(1); // Select and configure port M1
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2); // Select and configure port M2
-uint8_t leftSpeed = 0, rightSpeed = 0, trigger_duration = 10;
+uint8_t leftSpeed = 0, rightSpeed = 0, leftDirection = FORWARD, rightDirection = FORWARD, trigger_duration = 10;
 
 // Global variables and definitions for distance sensor
 #define echoPin 2
@@ -49,6 +49,13 @@ bool gyroscope_on = false;
 unsigned int last_time_gyroscope_u;
 
 //<-----------------------------------------------------------------------------------------------------------------FUNCTIONS
+void update_motors() {
+  leftMotor->setSpeed(leftSpeed);
+  rightMotor->setSpeed(rightSpeed);
+  leftMotor->run(leftDirection);
+  rightMotor->run(rightDirection);
+}
+
 void update_location() {
   // Detection of ramp and whether the robot is in starting location or location of dummies
   // search_area == false means that the robot is in the delivery area
@@ -153,8 +160,9 @@ void loop() {
   // Time for functions which need accurate data
   current_time_u = micros();
 
-  // Updates in_starting_location and on_ramp
+  // Updates all variables
   update_location(); 
+  update_motors();
 
   // Integrates angle if it should
   if (gyroscope_on == true) {
