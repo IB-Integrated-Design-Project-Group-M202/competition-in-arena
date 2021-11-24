@@ -118,23 +118,23 @@ double measure_distance_mm() {
 void drive_on_line() {
   leftDirection = FORWARD; rightDirection = FORWARD;
   if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
-    if (left) { leftSpeed = 153; rightSpeed = 255; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); }
-    if (right) { leftSpeed = 255; rightSpeed = 153; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); }
+    if (left && !right) { leftSpeed = leftSpeed/1.2; rightSpeed = rightSpeed*1.2; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); }
+    if (right && !left) { leftSpeed = leftSpeed*1.2; rightSpeed = rightSpeed/1.2; leftMotor->setSpeed(leftSpeed); rightMotor->setSpeed(rightSpeed); }
   } else
   if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
     left = true; right = false;
-    rightSpeed = leftSpeed*1.2;
+    leftSpeed = rightSpeed/1.2;
   } else
   if ( leftSensorStatus == LOW && rightSensorStatus == HIGH) {
     right = true; left = false;
-    leftSpeed = rightSpeed*1.2;
+    rightSpeed = leftSpeed/1.2;
   }
-  /* (accel) {
+  if (accel) {
     if (leftSpeed < 255) leftSpeed += 51;
     if (rightSpeed < 255) rightSpeed += 51;
     if (leftSpeed == 255 && rightSpeed == 255) accel = false;
   }
-  if (decel) {
+  /*if (decel) {
     if (leftSpeed > 0) leftSpeed -= 51;
     if (rightSpeed > 0) rightSpeed -= 51;
     if (leftSpeed == 0 && rightSpeed == 0) decel = false;
