@@ -109,7 +109,6 @@ void loop() {
       // set the LED with the ledState of the variable:
       digitalWrite(amberLED_Pin, amberLED_State);
     }
-    leftDirection = FORWARD; rightDirection = FORWARD;
     if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
       on_line = true;
       if (leftSpeed != rightSpeed) {
