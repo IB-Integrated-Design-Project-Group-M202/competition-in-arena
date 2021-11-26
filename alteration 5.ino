@@ -149,18 +149,20 @@ void drive_on_line() {
   } else
   if (leftSensorStatus == HIGH && rightSensorStatus == HIGH) on_line = false;
   update_motors();
+  update_location();
+  amberLED_control();
 }
 
 void drive_to_dummy() {
   unsigned short distance = measure_distance_mm();
   if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; }
   update_motors();
+  amberLED_control();
 }
 
 void drive_on_line_to_dummy() {
   drive_on_line();
   drive_to_dummy();
-  update_motors();
   if (arrived) { arrived = false; stopped = true; }
 }
 
@@ -177,6 +179,7 @@ void align_with_dummy() {
   else if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
   if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; }
   update_motors();
+  amberLED_control();
 }
 
 void identify_dummy() {
@@ -263,8 +266,6 @@ void setup() {
 void loop() {  
   // Updates all variables
   check_timeout();
-  update_location();
-  amberLED_control();
   if (!gyro_calibrated) reset_gyroscope();
   measure_gyroscope();
   if (gyroscope_angle) integrate_gyroscope(); // Integrates angle if it should
@@ -274,15 +275,6 @@ void loop() {
   if (gyro_calibrated && (search_area && (stopped && (identifiedLine && !aligned)))) align_with_dummy();
   if (gyro_calibrated && (search_area && (stopped && (identifiedLine && (aligned && !arrived))))) drive_to_dummy();
   if (gyro_calibrated && (search_area && (stopped && (identifiedLine && (aligned && (arrived && !identifiedArea)))))) identify_dummy();
-  
-  // Stops the robot if less than 15cm
-  if (search_area && measure_distance_mm < 150) {
-    rightSpeed = 0;
-    leftSpeed = 0;
-  }
-
-  // Control of the amber light
-  
 
   Serial.print(angle_turned); Serial.print('\t');
   Serial.print(leftSpeed); Serial.print('\t');
