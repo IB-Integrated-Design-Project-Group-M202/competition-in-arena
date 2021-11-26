@@ -130,22 +130,22 @@ void drive_on_line() {
   if (on_ramp) gyroscope_angle = false; else gyroscope_angle = true;
   if (leftSensorStatus == LOW && rightSensorStatus == LOW) {
     if (leftSpeed == rightSpeed) {
-      if (angle_turned >= 1.5) rightSpeed -= 25;
-      if (angle_turned <= -1.5) leftSpeed -= 25;
-      if (angle_turned <= 1.5 && angle_turned >= -1.5) { leftSpeed = 255; rightSpeed = 255; }
+      if (angle_turned >= 2) rightSpeed -= 15;
+      if (angle_turned <= -2) leftSpeed -= 15;
+      if (angle_turned <= 2 && angle_turned >= -2) { leftSpeed = 255; rightSpeed = 255; }
     } else
     if (leftSpeed != rightSpeed) {
-      if (angle_turned >= -0.5 || angle_turned <= 0.5) on_line = true;
+      if (angle_turned >= -1 && angle_turned <= 1) on_line = true;
       if (on_line) { leftSpeed = (leftSpeed + rightSpeed)/2; rightSpeed = leftSpeed; }
     }
   } else
   if (leftSensorStatus == HIGH && rightSensorStatus == LOW) {
-    on_line = false; leftSpeed -= 51; left = angle_turned;
-    if ((angle_turned + right) > 0) { leftSpeed -= 51; rightSpeed += 51; }
+    on_line = false; leftSpeed -= 25; left = angle_turned;
+    if (right != 0 && (angle_turned + right) > 0) { leftSpeed -= 25; rightSpeed += 25; }
   } else
   if (leftSensorStatus == LOW && rightSensorStatus == HIGH) {
-    on_line = false; rightSpeed -= 51; right = angle_turned;
-    if ((angle_turned + left) < 0) { leftSpeed += 51; rightSpeed -= 51; }
+    on_line = false; rightSpeed -= 25; right = angle_turned;
+    if (left != 0 && (angle_turned + left) < 0) { leftSpeed += 25; rightSpeed -= 25; }
   } else
   if (leftSensorStatus == HIGH && rightSensorStatus == HIGH) on_line = false;
   update_motors();
