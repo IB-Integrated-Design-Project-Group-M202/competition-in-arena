@@ -30,9 +30,13 @@ short leftSensorStatus, centralSensorStatus, rightSensorStatus;
 #define irr_Pin A0
 #define pt1_Pin A1
 #define pt2_Pin A2
-const int numReadings = 576;
-int readings[numReadings];
-int readIndex = 0, total = 0, average = 0, pt_Min = 1023, pt_Max = 0;
+const unsigned long window_time = 3000, hold_time = 12500;
+const int a_size = 20;
+int s1m1sa[a_size], s2m1sa[a_size];
+int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m1s = 0, s2m1 = 0, s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0;
+int pt1_maxima[3], pt2_maxima[3];
+unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastt = 0, gap = 0, now = 0;
+bool s1m1d = false;
 bool pt1_maximum = false, pt2_maximum = false;
 
 // Global variables and definitions for LEDs and Dummy Indication
@@ -47,7 +51,7 @@ unsigned int last_time_amber_m = 0;
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
-float angle_turned, left = 0, right = 0, dummy_angle;
+float angle_turned, left = 0, right = 0, pt1_angle, pt2_angle, dummy_angle;
 bool gyro_calibrated = false;
 unsigned int last_time_gyroscope_u;
 
