@@ -38,8 +38,9 @@ void setup() {
   // Configure IR sensors
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
-  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
-    readings[thisReading] = 0;
+  for (int i = 0; i < a_size; i++){
+    s1m1sa[i]=0;
+    s2m1sa[i]=0;
   }
   
   // Configure LEDs
