@@ -133,7 +133,67 @@ void drive_on_line_to_dummy() {
 }
 
 void pt_maxima() {
+  s1 = analogRead(pt1_Pin);
+  s2 = analogRead(pt2_Pin);
+  now = micros();
+
+  if (s1 > s1m1) {
+    s1m1 = s1;
+    s2m1 = s2;
+    s1m1t1 = now;
+    if (s1m1 > s1m1s) {
+       s1m1s = s1m1;
+       s2m1s = s2m1;
+       s1m1t2 = now;
+    }
+  }
+  s1m1tm1 = now - s1m1t1;
+
+  // Window Timeout
+  if (s1m1tm1 >= window_time) {
+    //initialises hold
+    s1m1d = false;
+    s1m1 = 0;
+    s2m1 = 0;
+
+    s1m1sat = s1m1sat - s1m1sa[a_i];
+    s2m1sat = s2m1sat - s2m1sa[a_i];
+    s1m1sat += s1m1s;
+    s2m1sat += s2m1s;
+    s1m1sa[a_i] = s1m1s;
+    s2m1sa[a_i] = s2m1s;
+    a_i += 1;
+    if (a_i >= a_size) {
+      a_i = 0;
+    }
+    s1m1saa = s1m1sat / a_size;
+    s2m1saa = s2m1sat / a_size;
+  }
+  s1m1tm2 = now - s1m1t2;
   
+  // Hold Timeout
+  if (s1m1tm2 >= hold_time) {
+    //initiates detection window
+    s1m1d = true;
+    s1m1t2 = now;
+    s1m1s = s1m1;
+    s2m1s = s2m1;
+  }
+
+  // Record Angle for PT1 Maximum
+  if (s1m1saa > pt1_maxima[i]) {
+    pt1_maxima[i] = s1m1saa; i += 1; if (i == 3) i = 0;
+  } else {
+    pt1_angle = angle_turned; pt1_maximum = true;
+  }
+  // Record Angle for PT2 Maximum
+  if (s2m1saa > pt1_maxima[i]) {
+    pt2_maxima[j] = s2m1saa; j += 1; if (j == 3) j = 0;
+  } else {
+    pt2_angle = angle_turned; pt2_maximum = true;
+  }
+  // Calculate Dummy Angle
+  if (pt1_maximum && pt2_maximum) dummy_angle = (pt1_angle + pt2_angle) / 2;
 }
 
 void align_with_dummy() {
