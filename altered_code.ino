@@ -1,6 +1,3 @@
-#include <Adafruit_MotorShield.h>
-#include <Arduino_LSM6DS3.h>
-#include <HCSR04.h>
 #include "variables.h"
 #include "functions.h"
 
