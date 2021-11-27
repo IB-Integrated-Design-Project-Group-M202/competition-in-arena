@@ -118,7 +118,7 @@ void drive_to_dummy() {
   update_location();
   integrate_gyroscope();
   distance = measure_distance_mm();
-  if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; }
+  if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; gyro_calibrated = false; }
   if (leftSpeed != 240 && angle_turned <= -2) { on_line = false; leftSpeed -= 15; }
   if (rightSpeed != 240 && angle_turned >= 2) { on_line = false; rightSpeed -= 15; }
   if (angle_turned >= -2 && angle_turned <= 2) { on_line = true; leftSpeed = 255; rightSpeed = 255; }
