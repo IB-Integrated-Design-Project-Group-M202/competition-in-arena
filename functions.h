@@ -126,7 +126,7 @@ void drive_to_dummy() {
   amberLED_control();
 }
 
-void drive_on_line_to_dummy() {
+void drive_on_line_to_obstruction() {
   drive_on_line();
   drive_to_dummy();
   if (arrived) { arrived = false; stopped = true; }
@@ -200,10 +200,45 @@ void align_with_dummy() {
   leftSpeed = 80; rightSpeed = 80;
   if (!pt1_maximum || !pt2_maximum) pt_maxima();
   short angle_error = angle_turned - dummy_angle;
-  if (dummy_angle == 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
-  else if (dummy_angle != 0 && angle_error < 0) { leftDirection = FORWARD; rightDirection = BACKWARD; }
-  else if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
-  if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; }
+  if (dummy_angle == 0) { leftDirection = BACKWARD; rightDirection = FORWARD; } else
+  if (dummy_angle != 0 && angle_error < 0) { leftDirection = FORWARD; rightDirection = BACKWARD; } else
+  if (dummy_angle != 0 && angle_error > 0) { leftDirection = BACKWARD; rightDirection = FORWARD; }
+  if (dummy_angle != 0 && abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; gyro_calibrated = false; }
+  update_motors();
+  amberLED_control();
+}
+
+void align_to_line() {
+  leftSpeed = 80; rightSpeed = 80;
+  short angle_error = angle_turned + 180;
+  if (angle_error < 0) { leftDirection = BACKWARD; rightDirection = FORWARD; } else
+  if (angle_error > 0) { leftDirection = FORWARD; rightDirection = BACKWARD; } else
+  if (abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; gyro_calibrated = false; on_line = false; }
+  update_motors();
+  amberLED_control();
+}
+
+void drive_to_line() {
+  leftSensorStatus = LineSensorStatus(leftLineSensor);
+  centralSensorStatus = LineSensorStatus(centralLineSensor);
+  rightSensorStatus = LineSensorStatus(rightLineSensor);
+  update_location();
+  integrate_gyroscope();
+  int SensorStati = leftSensorStatus + centralSensorStatus + rightSensorStatus;
+  if (SensorStati > 6) { leftSpeed = 0; rightSpeed = 0; arrived = true; aligned = false; gyro_calibrated = false; on_line = true; }
+  if (leftSpeed != 240 && angle_turned <= -2) leftSpeed -= 15;
+  if (rightSpeed != 240 && angle_turned >= 2) rightSpeed -= 15;
+  if (angle_turned >= -2 && angle_turned <= 2) { leftSpeed = 255; rightSpeed = 255; }
+  update_motors();
+  amberLED_control();
+}
+
+void align_with_line() {
+  leftSpeed = 80; rightSpeed = 80;
+  short angle_error = angle_turned + dummy_angle;
+  if (angle_error < 0) { leftDirection = BACKWARD; rightDirection = FORWARD; } else
+  if (angle_error > 0) { leftDirection = FORWARD; rightDirection = BACKWARD; } else
+  if (abs(angle_error) <= 0.5) { leftSpeed = 255; rightSpeed = 255; leftDirection = RELEASE; rightDirection = RELEASE; aligned = true; gyro_calibrated = false; }
   update_motors();
   amberLED_control();
 }
@@ -233,5 +268,9 @@ void dummy_indicator() {
 }
 
 void identify_dummy() {
+  if (!identifiedLine) identifiedLine = true;
+  if (!identifiedArea) identifiedArea = true;
   dummy_indicator();
+  identified_dummy_count += 1;
+  gyro_calibrated = false;
 }
