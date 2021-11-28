@@ -61,11 +61,19 @@ void loop() {
   if (!gyro_calibrated) reset_gyroscope();
   measure_gyroscope();
   if (gyro_calibrated && !search_area) drive_on_line(); else
-  if (search_area && !stopped)         drive_on_line_to_dummy(); else
-  if (stopped && !identifiedLine)      identify_dummy(); else
-  if (identifiedLine && !aligned)      align_with_dummy(); else
-  if (aligned && !arrived)             drive_to_dummy(); else
-  if (arrived && !identifiedArea)      identify_dummy(); else
-  if (identifiedArea && !timeout) { aligned = false; arrived = false; identifiedArea = false; }
-  
+  if (search_area && !stopped) drive_on_line_to_obstruction(); else
+  if (stopped && !identifiedLine) identify_dummy(); else
+  if (identifiedLine && !aligned) align_with_dummy(); else
+  if (aligned && !arrived) drive_to_dummy(); else
+  if (arrived && !identifiedArea) identify_dummy(); else
+  if (identifiedArea && !timeout) {
+    if (identified_dummy_count < 3 && identifiedArea) { aligned = false; arrived = false; identifiedArea = false; } else
+    if (identified_dummy_count >= 3 && identifiedLine) { aligned = false; arrived = false; identifiedLine = false; on_line = false; align_to_line(); }
+    if (aligned && !on_line) drive_to_line(); else
+    if (arrived && on_line) {
+      if (!aligned) align_with_line(); else
+      if (aligned && search_area) drive_on_line(); else
+      if (aligned && !search_area) drive_on_line_to_obstruction();
+    }
+  }
 }
