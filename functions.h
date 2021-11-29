@@ -84,32 +84,14 @@ void integrate_gyroscope() {
 
 void drive_on_line() {
   leftDirection = FORWARD; rightDirection = FORWARD;
-  leftSensorStatus = LineSensorStatus(leftLineSensor);
-  centralSensorStatus = LineSensorStatus(centralLineSensor);
-  rightSensorStatus = LineSensorStatus(rightLineSensor);
+  distance = measure_distance_mm();
   update_location();
   integrate_gyroscope();
-  if (centralSensorStatus > 1) {
-    if (leftSensorStatus <= 1 && rightSensorStatus <= 1) {
-      cross_road = false;
-      if (leftSpeed == rightSpeed) {
-        if (angle_turned <= 2 && angle_turned >= -2) { leftSpeed = 255; rightSpeed = 255; }
-      } else
-      if (leftSpeed != rightSpeed) {
-        if (angle_turned >= -2 && angle_turned <= 2) on_line = true;
-        if (on_line) { leftSpeed = (leftSpeed + rightSpeed)/2; rightSpeed = leftSpeed; }
-      }
-    } else
-    if (leftSensorStatus > 1 && rightSensorStatus <= 1) {
-      on_line = false; leftSpeed -= 25; left = angle_turned;
-      if (right != 0 && (angle_turned + right) > 0) { leftSpeed -= 25; rightSpeed += 25; }
-    } else
-    if (leftSensorStatus <= 1 && rightSensorStatus > 1) {
-      on_line = false; rightSpeed -= 25; right = angle_turned;
-      if (left != 0 && (angle_turned + left) < 0) { leftSpeed += 25; rightSpeed -= 25; }
-    } else
-    if (leftSensorStatus > 1 && rightSensorStatus > 1) cross_road = true;
-  }
+  if (distance > 0 && distance < 150) { leftSpeed = 0; rightSpeed = 0; arrived = true; gyro_calibrated = false; }
+  if (leftSpeed != 240 && angle_turned <= -2) { on_line = false; leftSpeed -= 15; }
+  if (rightSpeed != 240 && angle_turned >= 2) { on_line = false; rightSpeed -= 15; }
+  if (angle_turned >= -2 && angle_turned <= 2) { on_line = true; leftSpeed = 255; rightSpeed = 255; }
+  // Include Line Following Software Here!!
   update_motors();
   amberLED_control();
 }
