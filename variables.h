@@ -12,7 +12,7 @@ bool stopped = false, reached = false, aligned = false, arrived = false, identif
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); // Create the motor shield object with the default I2C address
 Adafruit_DCMotor *leftMotor = AFMS.getMotor(1); // Select and configure port M1
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2); // Select and configure port M2
-uint8_t leftSpeed = 0, rightSpeed = 0, leftDirection = FORWARD, rightDirection = FORWARD, trigger_duration = 10;
+uint8_t leftSpeed = 0, centreSpeed = 200, rightSpeed = 0, leftDirection = FORWARD, rightDirection = FORWARD;
 
 // Global variables and definitions for distance sensor
 #define echoPin 2
@@ -21,30 +21,42 @@ double* distances;
 unsigned short distance;
 
 // Global variables and definitions for line sensors
-#define leftLineSensor A3
-#define centralLineSensor A4
-#define rightLineSensor A5
+#define leftLineSensor A2
+#define centralLineSensor 4
+#define rightLineSensor A3
+const short lsl_max = 380, lsr_max = 920;
+const short lsl_min = 64, lsr_min = 122;
+const uint8_t lsl_threshold = 150;
+const uint8_t lsr_threshold = 150;
+short lsl = 0, lsc = 0, lsr = 0;
+uint8_t lsl_mapped = 0, lsr_mapped = 0;
 short leftSensorStatus, centralSensorStatus, rightSensorStatus;
 
 // Global variables and definitions for IR sensors
-#define irr_Pin A0
-#define pt1_Pin A1
-#define pt2_Pin A2
+#define irr_Pin 7
+#define pt1_Pin A0
+#define pt2_Pin A1
 const unsigned long window_time = 3000, hold_time = 12500;
-const int a_size = 20;
+const int a_size = 20, in_range_threshold=550;
+const float Kp = 0.04, Ki = 0.001, Kd = 0.1;
+const uint8_t approachSpeed=150, turnSpeed=150;
 int s1m1sa[a_size], s2m1sa[a_size];
-int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m1s = 0, s2m1 = 0, s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0;
-int pt1_maxima[3], pt2_maxima[3];
-unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastt = 0, gap = 0, now = 0;
-bool s1m1d = false;
-bool pt1_maximum = false, pt2_maximum = false;
+int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m2 = 1023, s1m1s = 0, s2m1 = 0, s2m2 = 1023;
+int s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0, sdiff = 0, ssum = 0;
+int8_t leftSpeedv = 0, rightSpeedv = 0, speed_difference = 0;
+int N_pt1_maxima = 0, N_pt2_maxima = 0, N_r1_maxima = 0, N_r2_maxima = 0, pt1_maxima[3], pt2_maxima[3];
+float gapf = 0;
+long P=0, I=0, D=0, last_P=0;
+unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastt = 0, lastPID = 0, gap = 0, now = 0;
+bool s1m1d = false, in_range = false, locked = false;
+bool pt_calibrated = false, pt1_maximum = false, pt2_maximum = false;
 
 // Global variables and definitions for LEDs and Dummy Indication
 #define amberLED_Pin 8
 #define greenLED_Pin 12
 #define redLED_Pin 13
 uint8_t amberLED_duration = 250, indicatorDelay = 1000;
-short amberLED_State = LOW, dummy = 0, identified_dummy_count = 0;
+short amberLED_State = LOW, dummy = 0, last_dummy = 0, identified_dummy_count = 0;
 unsigned int last_time_amber_m = 0;
 
 // Global variables and definitions for IMU
