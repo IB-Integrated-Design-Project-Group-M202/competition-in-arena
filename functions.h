@@ -116,10 +116,10 @@ void update_location() {
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
     if (!on_ramp) {
-      if (acceleration_y > 0.2) on_ramp = true; else
-      if (acceleration_y < -0.2) { on_ramp = true; search_area = !search_area; }
+      if (acceleration_y > 0.15) on_ramp = true; else
+      if (acceleration_y < -0.15) { on_ramp = true; search_area = !search_area; }
     } else {
-      if (acceleration_y < 0.2 && acceleration_y > -0.2) on_ramp = false;
+      if (acceleration_y < 0.15 && acceleration_y > -0.15) on_ramp = false;
     }
   }
 }
