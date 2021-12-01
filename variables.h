@@ -3,8 +3,9 @@
 #include <HCSR04.h>
 
 // Global variables for state of the robot
+#define startPin_endPin 5
 unsigned long start_time_m, finish_time_m = 3E5;
-bool accel = true, decel = false, timeout = false;
+bool accel = true, decel = false, timeout = false, started = false, ended = true;
 bool on_line = true, cross_road = false, on_ramp = false, search_area = false;
 bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
@@ -37,25 +38,29 @@ short leftSensorStatus, centralSensorStatus, rightSensorStatus;
 #define pt1_Pin A0
 #define pt2_Pin A1
 const unsigned long window_time = 3000, hold_time = 12500;
-const int a_size = 20, in_range_threshold=550;
+const int a_size = 20, in_range_threshold=750;
 const float Kp = 0.04, Ki = 0.001, Kd = 0.1;
-const uint8_t approachSpeed=150, turnSpeed=150;
+const uint8_t approachSpeed=170, turnSpeed=170;
+const unsigned long search_timeout=10000;
 int s1m1sa[a_size], s2m1sa[a_size];
 int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m2 = 1023, s1m1s = 0, s2m1 = 0, s2m2 = 1023;
 int s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0, sdiff = 0, ssum = 0;
 int8_t leftSpeedv = 0, rightSpeedv = 0, speed_difference = 0;
+uint8_t ranging_index=0; 
+
 int N_pt1_maxima = 0, N_pt2_maxima = 0, N_r1_maxima = 0, N_r2_maxima = 0, pt1_maxima[3], pt2_maxima[3];
 float gapf = 0;
 long P=0, I=0, D=0, last_P=0;
 unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastt = 0, lastPID = 0, gap = 0, now = 0;
-bool s1m1d = false, in_range = false, locked = false;
+unsigned long search_timer=0, now_ms=0;
+bool s1m1d = false, in_range = false, sequence_timeout=false;;
 bool pt_calibrated = false, pt1_maximum = false, pt2_maximum = false;
 
 // Global variables and definitions for LEDs and Dummy Indication
 #define amberLED_Pin 8
 #define greenLED_Pin 12
 #define redLED_Pin 13
-uint8_t amberLED_duration = 250, indicatorDelay = 1000;
+uint8_t amberLED_duration = 250, indicatorDelay = 3E6;
 short amberLED_State = LOW, dummy = 0, last_dummy = 0, identified_dummy_count = 0;
 unsigned int last_time_amber_m = 0;
 
@@ -63,7 +68,7 @@ unsigned int last_time_amber_m = 0;
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
-float angle_turned, left = 0, right = 0, pt1_angle, pt2_angle, dummy_angle;
+float angle_turned, left = 0, right = 0, pt1_angle, pt2_angle, dummy_angle, dummy_angle_1, dummy_angle_2, dummy_angle_3;
 bool gyro_calibrated = false;
 unsigned int last_time_gyroscope_u;
 
