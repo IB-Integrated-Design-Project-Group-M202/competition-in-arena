@@ -99,10 +99,10 @@ void identify_dummy() {
       { identifiedLine = true; on_line = false; dummy_angle_1 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
     if (in_range && !identifiedArea) {
       identifiedArea = true;
+      if (dummy_angle_2 != 0 and dummy_angle_3 == 0)
+        { dummy_angle_3 = dummy_angle; identified_dummy_count ++; dummy_indicator(); } else
       if (dummy_angle_1 != 0 and dummy_angle_2 == 0)
         { dummy_angle_2 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
-      if (dummy_angle_2 != 0 and dummy_angle_3 == 0)
-        { dummy_angle_3 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
     }
     gyro_calibrated = false;
   }
