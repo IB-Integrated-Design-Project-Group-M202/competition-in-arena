@@ -3,9 +3,8 @@
 #include <HCSR04.h>
 
 // Global variables for state of the robot
-#define startPin_endPin 5
 unsigned long start_time_m, finish_time_m = 3E5;
-bool accel = true, decel = false, timeout = false, started = false, ended = true;
+bool accel = true, decel = false, timeout = false;
 bool on_line = true, cross_road = false, on_ramp = false, search_area = false;
 bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
@@ -45,7 +44,7 @@ const unsigned long search_timeout=10000;
 int s1m1sa[a_size], s2m1sa[a_size];
 int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m2 = 1023, s1m1s = 0, s2m1 = 0, s2m2 = 1023;
 int s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0, sdiff = 0, ssum = 0;
-int8_t leftSpeedv = 0, rightSpeedv = 0, speed_difference = 0;
+short leftSpeedv = 0, rightSpeedv = 0, speed_difference = 0;
 uint8_t ranging_index=0; 
 
 int N_pt1_maxima = 0, N_pt2_maxima = 0, N_r1_maxima = 0, N_r2_maxima = 0, pt1_maxima[3], pt2_maxima[3];
@@ -60,7 +59,8 @@ bool pt_calibrated = false, pt1_maximum = false, pt2_maximum = false;
 #define amberLED_Pin 8
 #define greenLED_Pin 12
 #define redLED_Pin 13
-uint8_t amberLED_duration = 250, indicatorDelay = 3E6;
+const uint8_t amberLED_duration = 250;
+const short indicatorDelay = 3000;
 short amberLED_State = LOW, dummy = 0, last_dummy = 0, identified_dummy_count = 0;
 unsigned int last_time_amber_m = 0;
 
