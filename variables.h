@@ -50,7 +50,7 @@ uint8_t ranging_index=0;
 int N_pt1_maxima = 0, N_pt2_maxima = 0, N_r1_maxima = 0, N_r2_maxima = 0, pt1_maxima[3], pt2_maxima[3];
 float gapf = 0;
 long P=0, I=0, D=0, last_P=0;
-unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastt = 0, lastPID = 0, gap = 0, now = 0;
+unsigned long s1m1tm1 = 0, s1m1tm2 = 0, s1m1t1 = 0, s1m1t2 = 0, s2m1tm1 = 0, s2m1tm2 = 0, s2m1t1 = 0, s2m1t2 = 0, lastPID = 0, gap = 0, now = 0;
 unsigned long search_timer=0, now_ms=0;
 bool s1m1d = false, in_range = false, sequence_timeout=false;;
 bool pt_calibrated = false, pt1_maximum = false, pt2_maximum = false;
