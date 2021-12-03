@@ -60,8 +60,8 @@ void loop() {
   if (stopped && !identifiedLine) identify_dummy(); else
   if (identifiedLine && !in_range) search_and_align_and_identify(); else
   if (in_range && !timeout) {
-    if (identified_dummy_count < 3 && identifiedArea) escape(); else
-    if (identified_dummy_count == 3 && (!aligned && !on_line)) align_to_line();
+    if (dummy_angle_3 == 0 && identifiedArea) escape(); else
+    if (dummy_angle_3 != 0 && (!aligned && !on_line)) align_to_line();
     if (aligned && (!arrived && !on_line)) drive_to_line(); else
     if (arrived && on_line) {
       if (!aligned) align_with_line(); else
