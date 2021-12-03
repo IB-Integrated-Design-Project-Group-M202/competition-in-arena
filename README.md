@@ -3,7 +3,7 @@
 
 This repository contains two separate folders:
 
-'Final Code' contains three files: "execution.ino", "variables.h" and "functions.h", which operate coherently during the competition in the arena.
+'Final Code' contains three files, which combine to operate the robot coherently during the competition in the arena.
 
 'Test Functions' contains many files, all of which work individually and operate to perform a specific task, described at the beginning of the file.
 
