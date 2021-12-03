@@ -3,7 +3,7 @@ Configures and Operates all of the Components on the Arduino Uno Wi-Fi Rev 2 Boa
 
 This repository contains two separate folders:
 
-'Final Code' contains three files: "execution.ino", "variables.h" and "functions.h", which operate coherently when uploaded to the Arduino Uno Wi-Fi Rev 2 Board.
+'Final Code' contains three files: "execution.ino", "variables.h" and "functions.h", which operate coherently during the competition in the arena.
 
 'Test Functions' contains many files, all of which work individually and operate to perform a specific task, described at the beginning of the file.
 
