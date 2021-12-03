@@ -79,6 +79,7 @@ struct states { // For monitoring the robot status
   bool identifiedLine;
   bool pt1_maximum;
   bool pt2_maximum;
+  bool in_range;
   bool aligned;
   bool arrived;
   bool identifiedArea;
