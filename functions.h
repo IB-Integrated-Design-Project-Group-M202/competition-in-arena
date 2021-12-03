@@ -7,14 +7,6 @@ short LineSensorStatus(int LineSensorPin) {
   return map(analogRead(LineSensorPin), 0, 1023, 0, 4);
 }
 
-void start_robot() {
-  if (digitalRead(startPin_endPin) == HIGH && ended) started = true;
-}
-
-void end_robot() {
-  if (digitalRead(startPin_endPin) == HIGH && started) ended = true; 
-}
-
 void check_timeout() {
   if ((millis() - start_time_m) >= 2.4E5) {
     timeout = true;
@@ -28,18 +20,18 @@ void dummy_indicator() {
     case 1:
       digitalWrite(greenLED_Pin, HIGH);
       digitalWrite(redLED_Pin, HIGH);
-      delay(5000);
+      delay(indicatorDelay);
       digitalWrite(greenLED_Pin, LOW);
       digitalWrite(redLED_Pin, LOW);
       break;
     case 2:
       digitalWrite(redLED_Pin, HIGH);
-      delay(5000);
+      delay(indicatorDelay);
       digitalWrite(redLED_Pin, LOW);
       break;
     case 3:
       digitalWrite(greenLED_Pin, HIGH);
-      delay(5000);
+      delay(indicatorDelay);
       digitalWrite(greenLED_Pin, LOW);
       break;
   }
@@ -59,14 +51,13 @@ void identify_dummy() {
   if (dummy == 0) {
     if (!pt_calibrated) calibrate_pt();
     N_pt1_maxima = 0; N_pt2_maxima = 0; N_r1_maxima = 0; N_r2_maxima = 0;
-  
+    
     now = millis();
     if(s1 >= 500) delay(4); //leave the first spike if there is one
     while(millis() - now < 650){
       s1 = analogRead(pt1_Pin);
       s1 = constrain(s1, s1m2, s1m1);
       s1 = map(s1, s1m2, s1m1, 0, 1023);
-     
       if(s1 >= 200){
         N_pt1_maxima++;
         delayMicroseconds(300);
@@ -80,11 +71,9 @@ void identify_dummy() {
     now = millis();
     if(s2 >= 500){delay(4);} //leave the first spike if there is one
     while(millis() - now < 650){
-    
       s2 = analogRead(pt2_Pin);
       s2 = constrain(s2, s2m2, s2m1);
       s2 = map(s2, s2m2, s2m1, 0, 1023);
-     
       if (s2 >= 200) {
         N_pt2_maxima++;
         delayMicroseconds(300);
@@ -106,14 +95,15 @@ void identify_dummy() {
     last_dummy = dummy;
   }
   if (dummy != 0) {
-    if (stopped && !identifiedLine) { identifiedLine = true; dummy_angle_1 = dummy_angle;}
-    if (arrived && !identifiedArea) {
+    if (stopped && !identifiedLine)
+      { identifiedLine = true; on_line = false; dummy_angle_1 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
+    if (in_range && !identifiedArea) {
       identifiedArea = true;
-      if (dummy_angle_2 != 0 and dummy_angle_3 == 0) dummy_angle_3 = dummy_angle;
-      if (dummy_angle_2 == 0) dummy_angle_2 = dummy_angle;
+      if (dummy_angle_1 != 0 and dummy_angle_2 == 0)
+        { dummy_angle_2 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
+      if (dummy_angle_2 != 0 and dummy_angle_3 == 0)
+        { dummy_angle_3 = dummy_angle; identified_dummy_count ++; dummy_indicator(); }
     }
-    dummy_indicator();
-    identified_dummy_count += 1;
     gyro_calibrated = false;
   }
 }
@@ -125,12 +115,36 @@ void update_motors() {
   rightMotor->run(rightDirection);
 }
 
+void update_motors_by_direction() {
+  if (leftSpeedv>0) leftDirection=FORWARD;
+  else leftDirection=BACKWARD;
+  if (rightSpeedv>0) rightDirection=FORWARD;
+  else rightDirection=BACKWARD;
+  update_motors();
+}
+
 void update_linesensors(){
   lsc = digitalRead(centralLineSensor);
   lsl = analogRead(leftLineSensor);
   lsr = analogRead(rightLineSensor);
   lsl_mapped = map(min(max(lsl, lsl_min), lsl_max), lsl_min, lsl_max, 0, 255);
   lsr_mapped = map(min(max(lsr, lsr_min), lsr_max), lsr_min, lsr_max, 0, 255);
+}
+
+void update_location() {
+  /* Detection of ramp and whether the robot is in starting location or location of dummies
+   * search_area == false means that the robot is in the delivery area
+   * search_area == true means that the robot is in the search area
+   */
+  if (IMU.accelerationAvailable()) {
+    IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
+    if (!on_ramp) {
+      if (acceleration_y > 0.2) on_ramp = true; else
+      if (acceleration_y < -0.2) { on_ramp = true; search_area = !search_area; arrived = false; }
+    } else {
+      if (acceleration_y < 0.2 && acceleration_y > -0.2) on_ramp = false;
+    }
+  }
 }
 
 void reset_PID(){
@@ -160,17 +174,17 @@ void IR_peak_update(){
 }
 
 void if_in_range(){
-    if(ssum>=in_range_threshold){
-        if(in_range==false){
-            in_range=true;
-            reset_PID();
-            centreSpeed=approachSpeed;
-        }
+  if(ssum>=in_range_threshold){
+    if(in_range==false){
+      in_range=true;
+      reset_PID();
+      centreSpeed=approachSpeed;
     }
-    else{
-        in_range=false;
-        centreSpeed=0;
-    }
+  }
+  else{
+    in_range=false;
+    centreSpeed=0;
+  }
 }
 
 void if_on_line(){
@@ -196,61 +210,35 @@ void if_cross_road(){
   }
 }
 
-void if_stop(){
-
-    if(ranging_index%16==0){
-        distance=measure_distance_mm();
-        if(distance<=180 and distance!=-1){
-            stopped=true;
-        }
+void if_arrived(){
+  if(ranging_index%16==0){
+    distance=measure_distance_mm();
+    if(distance>0 and distance<=180){
+      arrived=true;
     }
-    ranging_index++;
+  }
+  ranging_index++;
 }
 
 void PID_update(){
-    gap=now-lastPID;
-    gapf=gap/5000;
-    if(in_range==true){
-        P=sdiff;
-        I=I+P*gapf/10;
-        D=(P-last_P)/gapf;
-        last_P=P;
-        speed_difference=max(min((Kp*P+Ki*I+Kd*D), turnSpeed), -turnSpeed);
-        if_stop();
-    }
-    else{
-        speed_difference=turnSpeed;
-    }
-    lastPID=now;
-    leftSpeedv=centreSpeed-speed_difference;
-    rightSpeedv=centreSpeed+speed_difference;
-    leftSpeed=abs(leftSpeedv);
-    rightSpeed=abs(rightSpeedv);
-
-}
-
-void motor_update() {
-  if (leftSpeedv>0) leftDirection=FORWARD;
-  else leftDirection=BACKWARD;
-  if (rightSpeedv>0) rightDirection=FORWARD;
-  else rightDirection=BACKWARD;
-  update_motors();
-}
-
-void update_location() {
-  /* Detection of ramp and whether the robot is in starting location or location of dummies
-   * search_area == false means that the robot is in the delivery area
-   * search_area == true means that the robot is in the search area
-   */
-  if (IMU.accelerationAvailable()) {
-    IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
-    if (!on_ramp) {
-      if (acceleration_y > 0.2) on_ramp = true; else
-      if (acceleration_y < -0.2) { on_ramp = true; search_area = !search_area; }
-    } else {
-      if (acceleration_y < 0.2 && acceleration_y > -0.2) on_ramp = false;
-    }
+  gap=now-lastPID;
+  gapf=gap/5000;
+  if(in_range==true){
+    P=sdiff;
+    I=I+P*gapf/10;
+    D=(P-last_P)/gapf;
+    last_P=P;
+    speed_difference=max(min((Kp*P+Ki*I+Kd*D), turnSpeed), -turnSpeed);
+    if_arrived();
   }
+  else{
+    speed_difference=turnSpeed;
+  }
+  lastPID=now;
+  leftSpeedv=centreSpeed-speed_difference;
+  rightSpeedv=centreSpeed+speed_difference;
+  leftSpeed=abs(leftSpeedv);
+  rightSpeed=abs(rightSpeedv);
 }
 
 void amberLED_control() {
@@ -300,7 +288,7 @@ void integrate_gyroscope() {
 }
 
 void drive_on_line() {
-  leftDirection = FORWARD; rightDirection = FORWARD;
+  leftDirection = FORWARD; rightDirection = FORWARD; stopped = false;
   distance = measure_distance_mm();
   update_linesensors();
   
@@ -326,118 +314,93 @@ void drive_on_line_to_obstruction() {
 }
 
 void search(){
+  search_timer=millis();
+  sequence_timeout=false;
+  while(!arrived and !sequence_timeout){
+    IR_readout();
+    IR_peak_update();
 
-    //Serial.println("loop"+String(sequence_timeout)+String(distance)+String(ranging_index));
-    search_timer=millis();
-    sequence_timeout=false;
-    while(stopped==false and sequence_timeout==false){
-        IR_readout();
+    s1m1tm1=now-s1m1t1;
 
-        IR_peak_update();
-
-        s1m1tm1=now-s1m1t1;
-
-        //timeout
-        if(s1m1tm1>=window_time){
-            //initialises hold
-            s1m1d=false;
-            s1m1=0;
-            s2m1=0;
-
-            s1m1sat=s1m1sat-s1m1sa[a_i];
-            s2m1sat=s2m1sat-s2m1sa[a_i];
-            s1m1sat+=s1m1s;
-            s2m1sat+=s2m1s;
-            s1m1sa[a_i]=s1m1s;
-            s2m1sa[a_i]=s2m1s;
-            a_i+=1;
-            if (a_i>=a_size){
-                a_i=0;
-            }
-            s1m1saa=s1m1sat/a_size;
-            s2m1saa=s2m1sat/a_size;
-            ssum=s1m1saa+s2m1saa;
-            sdiff=s1m1saa-s2m1saa;
-            if_in_range();
-
-            PID_update();
-            motor_update();
-            if(((now_ms-search_timer)>=search_timeout & in_range==false)){
-              sequence_timeout=true;
-            }
-            //Serial.println("search"+String(distance));
-            //Serial.print(String(s1m1saa)+"\t"+String(s2m1saa)+'\t');
-            //Serial.print(String(ssum)+"\t"+String(sdiff)+'\t');
-            //Serial.println(String(P)+"\t"+String(I/1000)+"\t"+String(D)+'\t');
-            //Serial.println(String(speed_difference)+"\t"+String(in_range*1024));
-           // Serial.println(String(s1m1saa)+"\t"+String(s2m1saa)+'\t'+String(ssum)+"\t"+String(sdiff)+'\t'+String(P)+"\t"+String(I/1000)+"\t"+String(D)+'\t');
-
-            //Serial.println(String(s1m1saa)+'\t'+String(s2m1saa)+'\t'+String(in_range*1023)+'\t'+String(speed_difference));
-        }
-
-        s1m1tm2=now-s1m1t2;
-            //timeout
-        if(s1m1tm2>=hold_time){
-                //initiates detection window
-            s1m1d=true;
-            s1m1t2=now;
-            s1m1s=s1m1;
-            s2m1s=s2m1;
-        }
-
-        now_ms=millis();
+    //timeout
+    if(s1m1tm1>=window_time){
+      //initialises hold
+      s1m1d=false;
+      s1m1=0;
+      s2m1=0;
+      s1m1sat=s1m1sat-s1m1sa[a_i];
+      s2m1sat=s2m1sat-s2m1sa[a_i];
+      s1m1sat+=s1m1s;
+      s2m1sat+=s2m1s;
+      s1m1sa[a_i]=s1m1s;
+      s2m1sa[a_i]=s2m1s;
+      a_i+=1;
+      if (a_i>=a_size){
+        a_i=0;
+      }
+      s1m1saa=s1m1sat/a_size;
+      s2m1saa=s2m1sat/a_size;
+      ssum=s1m1saa+s2m1saa;
+      sdiff=s1m1saa-s2m1saa;
+      if_in_range();
+      PID_update();
+      update_motors_by_direction();
+      if((now_ms-search_timer)>=search_timeout and !in_range){
+        sequence_timeout=true;
+      }
     }
+
+    s1m1tm2=now-s1m1t2;
+    //timeout
+    if(s1m1tm2>=hold_time){
+      //initiates detection window
+      s1m1d=true;
+      s1m1t2=now;
+      s1m1s=s1m1;
+      s2m1s=s2m1;
+    }
+    now_ms=millis();
+  }
 }
 
 void walk(){
-    search_timer=millis();
-    sequence_timeout=false;
-    while(stopped==false & sequence_timeout==false){
-        if_stop();
-        //Serial.println("walk"+String(distance));
-        leftSpeedv=245;
-        rightSpeedv=220;
-        motor_update();
-        now_ms=millis();
-        if(((now_ms-search_timer)>=3000)){
-            sequence_timeout=true;
-        }
-
+  search_timer=millis();
+  sequence_timeout=false;
+  while(!arrived and !sequence_timeout){
+    if_arrived();
+    leftSpeed=245;
+    rightSpeed=220;
+    update_motors();
+    now_ms=millis();
+    if((now_ms-search_timer)>=3000){
+      sequence_timeout=true;
     }
-    
-    
-}
-
-void escape(){
-    stopped=false;
-    leftSpeedv=-250;
-    rightSpeedv=150;
-    leftSpeed=abs(leftSpeedv);
-    rightSpeed=abs(rightSpeedv);
-    motor_update();
-    delay(2000);
+  }
 }
 
 void search_and_align_and_identify(){
+  search();
+  walk();
+  if_arrived();
+  if(arrived){
+    leftSpeed=0;
+    rightSpeed=0;
+    update_motors();
+  }
+  if_in_range();
+  if(in_range){
+    identify_dummy();
+  }
+}
 
-    search();
-    walk();
-
-    if_stop();
-    if(stopped==true){
-        leftSpeed=0;
-        rightSpeed=0;
-        motor_update();
-    }
-    
-    if_in_range();
-
-    if(in_range=true){
-        identify_dummy();
-    }
-
-    escape();
-
+void escape(){
+  arrived=false; in_range = false; identifiedArea = false;
+  leftSpeedv=-250;
+  rightSpeedv=150;
+  leftSpeed=abs(leftSpeedv);
+  rightSpeed=abs(rightSpeedv);
+  update_motors_by_direction();
+  delay(2000);
 }
 
 void align_with_line() {
@@ -452,6 +415,7 @@ void align_with_line() {
 }
 
 void align_to_line() {
+  arrived = false; on_line = false;
   leftSpeed = 80; rightSpeed = 80;
   if (angle_turned < 180) { leftDirection = BACKWARD; rightDirection = FORWARD; } else
   if (angle_turned > 180) { leftDirection = FORWARD; rightDirection = BACKWARD; } else
