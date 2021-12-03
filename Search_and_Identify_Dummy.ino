@@ -1,4 +1,8 @@
 /* Pragash Mohanarajah (C) November 2021. */
+// IMPORTANT NOTICE
+// This file has been abandoned, due to irreliability of Digital Phototransistor Control
+// Search_Align_Identify_Escape_PID.ino uses Analog Phototransistor Control coupled with PID Control
+// Refer to this file for Search and Identify Algorithm implementation
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
