@@ -1,4 +1,9 @@
 /* Pragash Mohanarajah (C) November 2021. */
+// IMPORTANT NOTICE
+// This file has been abandoned, due to irreliability of Digital Line Sensor Control
+// Line_Sensors_Analog_PID_Motor_Control.ino uses Analog Line Sensor Control coupled with PID Control
+// Refer to this file for Drive Forwards on Line Algorithm implementation
+// The functions.h Header file contains a drive_to_dummy_on_line function with this algorithm
 
 #include <Adafruit_MotorShield.h>
 #include <Arduino_LSM6DS3.h>
