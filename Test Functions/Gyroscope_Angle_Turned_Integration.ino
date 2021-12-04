@@ -13,6 +13,8 @@
  */
 int readings = 0;
 float x, y, angle, angle_offset = 0, angle_turned = 0, angle_total = 0;
+// Values below 0.2 are ommited as the values of angle during use are much bigger. Values below 0.2 are mostly errors while the Arduino does not move 
+const float angle_threshold = 0.2;
 
 void setup() {
   // Serial used for testing
@@ -57,8 +59,11 @@ void loop() {
     elapsedMicros = currentMicros - lastMicros;
     
     // Integrates the angle taking the angle_offset into consideration
-    // There is another offset of 180/160.7 found experimentally 
-    angle_turned += (angle - angle_offset)*elapsedMicros/1000*180/160.7/1000;
+    // There is another offset of 180/160.7 found experimentally
+    // It integrates the value only if the value is higher than the threshold
+    if((angle - angle_offset) > angle_threshold){
+      angle_turned += (angle - angle_offset)*elapsedMicros/1000*180/160.7/1000;
+    }
     
     // Delay simulating other functions running in parallel
     delay(50);
