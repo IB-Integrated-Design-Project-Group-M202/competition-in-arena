@@ -1,3 +1,6 @@
+#include <Arduino_LSM6DS3.h>
+
+// Variables and definitions for IMU Accelerometer
 const float tangent_slope_angle = 0.2;
 bool on_ramp = false, location_changed = false, search_area = false;
 float acceleration_x, acceleration_y, acceleration_z;
@@ -35,7 +38,7 @@ void loop() {
   Serial.print('\t');
   Serial.print(acceleration_y);
   Serial.print('\t');
-  Serial.print(acceletation_z);
+  Serial.print(acceleration_z);
   Serial.print('\t');
   Serial.print(on_ramp);
   Serial.print('\t');
