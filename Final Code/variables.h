@@ -64,7 +64,7 @@ short amberLED_State = LOW, dummy = 0, last_dummy = 0, identified_dummy_count = 
 unsigned int last_time_amber_m = 0;
 
 // Global variables and definitions for IMU
-const float tangent_slope_angle = 0.2, angle_z_threshold = 0.2;
+const float tangent_slope_angle = 0.15, angle_z_threshold = 0.15;
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;
