@@ -139,8 +139,9 @@ void update_location() {
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
     if (!on_ramp) {
-      if (acceleration_y > tangent_slope_angle) on_ramp = true; else
-      if (acceleration_y < - tangent_slope_angle) { on_ramp = true; search_area = !search_area; arrived = false; }
+      if (acceleration_y > tangent_slope_angle) { on_ramp = true; location_changed = true; } else
+      if (acceleration_y < - tangent_slope_angle)
+        {  on_ramp = true; arrived = false; if (location_changed) { search_area = !search_area; location_changed = false; } }
     } else {
       if (acceleration_y < tangent_slope_angle && acceleration_y > - tangent_slope_angle) on_ramp = false;
     }
