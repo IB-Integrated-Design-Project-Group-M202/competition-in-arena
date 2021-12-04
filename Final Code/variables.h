@@ -5,7 +5,7 @@
 // Global variables for state of the robot
 unsigned long start_time_m, finish_time_m = 3E5;
 bool accel = true, decel = false, timeout = false;
-bool on_line = true, cross_road = false, on_ramp = false, search_area = false;
+bool on_line = true, cross_road = false, on_ramp = false, search_area = false, location_changed = false;
 bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
 // Global variables and definitions for motors
