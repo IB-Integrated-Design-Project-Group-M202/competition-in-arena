@@ -61,8 +61,9 @@ void loop() {
     // Integrates the angle taking the angle_offset into consideration
     // There is another offset of 180/160.7 found experimentally
     // It integrates the value only if the value is higher than the threshold
-    if(abs(angle - angle_offset) > angle_threshold){
-      angle_turned += (angle - angle_offset)*elapsedMicros/1000*180/160.7/1000;
+    angle -= angle_offset;
+    if(abs(angle) > angle_threshold){
+      angle_turned += angle*elapsedMicros/1000*180/160.7/1000;
     }
     
     // Delay simulating other functions running in parallel
