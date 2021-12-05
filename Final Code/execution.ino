@@ -67,7 +67,8 @@ void loop() {
     if (aligned && (!arrived && !on_line)) drive_to_line(); else
     if (arrived && on_line) {
       if (!aligned) align_with_line(); else
-      if (aligned && search_area) drive_on_line();
+      if (aligned && search_area) drive_on_line(); else
+      if (aligned && !search_area) drive_on_line_to_obstruction();
     }
   }
 }

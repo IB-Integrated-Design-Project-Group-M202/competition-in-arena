@@ -141,7 +141,7 @@ void update_location() {
     if (!on_ramp) {
       if (acceleration_y > tangent_slope_angle) { on_ramp = true; location_changed = true; } else
       if (acceleration_y < - tangent_slope_angle)
-        {  on_ramp = true; arrived = false; if (location_changed) { search_area = !search_area; location_changed = false; } }
+        {  on_ramp = true; if (location_changed) { search_area = !search_area; location_changed = false; } }
     } else {
       if (acceleration_y < tangent_slope_angle && acceleration_y > - tangent_slope_angle) on_ramp = false;
     }
