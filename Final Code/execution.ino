@@ -21,6 +21,8 @@ void setup() {
   rightMotor->run(FORWARD);
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
+  leftSpeed = 255;
+  rightSpeed = 255;
 
   // Configure the distance sensor
   HCSR04.begin(trigPin, echoPin);
@@ -31,6 +33,7 @@ void setup() {
   pinMode(rightLineSensor, INPUT);
   
   // Configure IR sensors
+  pinMode(irr_Pin, INPUT);
   pinMode(pt1_Pin, INPUT);
   pinMode(pt2_Pin, INPUT);
   for (int i = 0; i < a_size; i++){
@@ -47,7 +50,6 @@ void setup() {
 
   // Start Time
   start_time_m = millis();
-  leftSpeed = 255; rightSpeed = 255;
 
 }
 
