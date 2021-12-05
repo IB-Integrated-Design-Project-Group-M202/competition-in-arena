@@ -3,8 +3,12 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}\\**",
-                "C:\\Users\\mprag\\OneDrive\\Documents\\Arduino\\libraries"
+                "${workspaceFolder}/**",
+                "C:/Program Files/Arduino/hardware/tools/avr/lib/gcc/avr/7.3.0/include",
+                "C:/Program Files/Arduino/hardware/arduino/avr/cores/arduino",
+                "C:/Program Files/Arduino/hardware/arduino/avr/variants/standard",
+                "C:/Program Files/Arduino/libraries",
+                "C:/Users/mprag/OneDrive/Documents/Arduino/libraries"
             ],
             "defines": [
                 "_DEBUG",
