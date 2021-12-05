@@ -5,7 +5,7 @@
 // Global variables for state of the robot
 unsigned long start_time_m, finish_time_m = 3E5;
 bool accel = true, decel = false, timeout = false;
-bool on_line = true, cross_road = false, on_ramp = false, search_area = false;
+bool on_line = true, cross_road = false, on_ramp = false, search_area = false, location_changed = false;
 bool stopped = false, reached = false, aligned = false, arrived = false, identifiedLine = false, identifiedArea = false;
 
 // Global variables and definitions for motors
@@ -45,8 +45,7 @@ int s1m1sa[a_size], s2m1sa[a_size];
 int a_i = 0, i = 0, j = 0, s1 = 0, s2 = 0, s1m1 = 0, s1m2 = 1023, s1m1s = 0, s2m1 = 0, s2m2 = 1023;
 int s2m1s = 0, s1m1sat = 0, s1m1saa = 0, s2m1sat = 0, s2m1saa = 0, sdiff = 0, ssum = 0;
 short leftSpeedv = 0, rightSpeedv = 0, speed_difference = 0;
-uint8_t ranging_index=0; 
-
+uint8_t ranging_index=0;
 int N_pt1_maxima = 0, N_pt2_maxima = 0, N_r1_maxima = 0, N_r2_maxima = 0, pt1_maxima[3], pt2_maxima[3];
 float gapf = 0;
 long P=0, I=0, D=0, last_P=0;
@@ -65,6 +64,7 @@ short amberLED_State = LOW, dummy = 0, last_dummy = 0, identified_dummy_count = 
 unsigned int last_time_amber_m = 0;
 
 // Global variables and definitions for IMU
+const float tangent_slope_angle = 0.15, angle_z_threshold = 0.15;
 float acceleration_x, acceleration_y, acceleration_z;
 float angle_x, angle_y, angle_z, last_angle_z;
 float angle_offset;

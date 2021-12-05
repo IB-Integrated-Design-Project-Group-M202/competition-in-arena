@@ -139,10 +139,11 @@ void update_location() {
   if (IMU.accelerationAvailable()) {
     IMU.readAcceleration(acceleration_x, acceleration_y, acceleration_z);
     if (!on_ramp) {
-      if (acceleration_y > 0.2) on_ramp = true; else
-      if (acceleration_y < -0.2) { on_ramp = true; search_area = !search_area; arrived = false; }
+      if (acceleration_y > tangent_slope_angle) { on_ramp = true; location_changed = true; } else
+      if (acceleration_y < - tangent_slope_angle)
+        {  on_ramp = true; arrived = false; if (location_changed) { search_area = !search_area; location_changed = false; } }
     } else {
-      if (acceleration_y < 0.2 && acceleration_y > -0.2) on_ramp = false;
+      if (acceleration_y < tangent_slope_angle && acceleration_y > - tangent_slope_angle) on_ramp = false;
     }
   }
 }
@@ -279,11 +280,7 @@ void measure_gyroscope() {
 void integrate_gyroscope() {
   unsigned int elapsed_time_u = micros() - last_time_gyroscope_u;
   float angle_change = (angle_z + last_angle_z)/2 - angle_offset;
-  if (!stopped) {
-    if (angle_change > 0.15 || angle_change < -0.15) angle_turned += angle_change*elapsed_time_u*180/161/1E6;
-  } else {
-    if (angle_change > 0.15 || angle_change < -0.15) angle_turned += angle_change*elapsed_time_u*180/54/1E6;
-  }
+  if (angle_change > angle_z_threshold || angle_change < - angle_z_threshold) angle_turned += angle_change*elapsed_time_u*180/161/1E6;
   last_time_gyroscope_u = micros(); last_angle_z = angle_z;
 }
 
