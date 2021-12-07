@@ -10,6 +10,7 @@ bool accel = true, decel = false;
 #define trigPin 3
 double distance;
 
+
 uint8_t ranging_index=0;
 
 // Global variables and definitions for motors
@@ -29,14 +30,17 @@ bool stop=false;
 bool sequence_timeout=false;
 //int in_range_indication=0;
 
+//timing variables
 unsigned long search_timer=0;
 unsigned long now_ms=0;
 
 
-//parameters
+//PID control parameters
 const float Kp=0.04;
 const float Ki=0.001;
 const float Kd=0.1;
+
+//detection and movement variables
 const int in_range_threashold=750;
 const uint8_t approachSpeed=170;
 const uint8_t turnSpeed=170;
@@ -62,7 +66,7 @@ const int IRs1 = A0, IRs2 = A1, IRRd=7;
 const unsigned long window_time=3000, hold_time=12500;
 const int a_size=20;
 
-
+//arrays for smoothing out maximum values stored
 int s1m1sa[a_size], s2m1sa[a_size];
 int a_i=0;
 int s1m1sat=0, s1m1saa=0, s2m1sat=0, s2m1saa=0;
@@ -79,11 +83,13 @@ bool s1m1d = false;
 //output
 String output="";
 
+//ultrasonic distance measurement
 double measure_distance_mm() {
     double* distances = HCSR04.measureDistanceMm();
     return distances[0];
 }
 
+//obstacle avoidance
 void if_stop(){
 
     if(ranging_index%16==0){
@@ -108,11 +114,14 @@ void IR_readout(){
     now = micros();
 }
 
+//fast update of maximum value during readout window
 void IR_peak_update(){
+    //sensor 1 main
     if(s1 > s1m1){
             s1m1 = s1;
             s2m1 = s2;
             s1m1t1 = now;
+           //sensor 2 follows
             if(s1m1>s1m1s){
                 s1m1s=s1m1;
                 s2m1s=s2m1;
@@ -121,6 +130,7 @@ void IR_peak_update(){
     }
 }
 
+//triggers the alignment and approach to the dummy when signal is detected 
 void if_in_range(){
     in_range_indication=abs((s1m1saa-s1)*ssum / 100);
     if(ssum>=in_range_threashold){
@@ -139,6 +149,8 @@ void if_in_range(){
 void PID_update(){
     gap=now-lastPID;
     gapf=gap/5000;
+    
+    //only updates if dummy is in range
     if(in_range==true){
         P=sdiff;
         I=I+P*gapf/10;
@@ -147,6 +159,8 @@ void PID_update(){
         speed_difference=max(min((Kp*P+Ki*I+Kd*D), turnSpeed), -turnSpeed);
         if_stop();
     }
+    
+    //otherwise turn on spot to search
     else{
         speed_difference=turnSpeed;
     }
@@ -199,6 +213,8 @@ void search(){
     Serial.println("loop"+String(sequence_timeout)+String(distance)+String(ranging_index));
     search_timer=millis();
     sequence_timeout=false;
+    
+    //search and align phase (IR intensity navigation active)
     while(stop==false and sequence_timeout==false){
         IR_readout();
 
@@ -208,11 +224,14 @@ void search(){
 
         //timeout
         if(s1m1tm1>=window_time){
-            //initialises hold
+            //initialises hold period
             s1m1d=false;
             s1m1=0;
             s2m1=0;
-
+            
+            //calculations and commands are done during the IR reading hold period to ensure maximum frequency during readout
+            
+            //average the peak values to obtain smooth readings
             s1m1sat=s1m1sat-s1m1sa[a_i];
             s2m1sat=s2m1sat-s2m1sa[a_i];
             s1m1sat+=s1m1s;
@@ -227,10 +246,14 @@ void search(){
             s2m1saa=s2m1sat/a_size;
             ssum=s1m1saa+s2m1saa;
             sdiff=s1m1saa-s2m1saa;
+            //navigation commands
             if_in_range();
 
             PID_update();
+            
             motor_update();
+            
+            //pause search phase if timeout and switch to walk mode
             if(((now_ms-search_timer)>=search_timeout & in_range==false)){
               sequence_timeout=true;
             }
@@ -255,7 +278,7 @@ void search(){
         }
 
         s1m1tm2=now-s1m1t2;
-        //timeout
+        //terminates the hold periold
         if(s1m1tm2>=hold_time){
             //initiates detection window
             s1m1d=true;
@@ -268,6 +291,8 @@ void search(){
     }
 }
 
+
+//walk to a different loaction to carry out search while keeping obstacal avoidance active
 void walk(){
     search_timer=millis();
     sequence_timeout=false;
@@ -287,6 +312,7 @@ void walk(){
     
 }
 
+//reverse and turn if encontered obstacle or finished task
 void escape(){
     stop=false;
     leftSpeedv=-250;
