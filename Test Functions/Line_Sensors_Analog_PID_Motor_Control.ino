@@ -38,11 +38,12 @@ const float Kd=0.01;
 //PID variables
 int P=0, I=0, D=0, last_P=0;
 
+//time variables
 unsigned long off_line_timer_ms=0, correction_timer=0;
 const unsigned long off_line_timeout=8000, correction_timeout=3000;
 
 
-
+//take readings and map to 0-255
 void update_linesensors(){
     lsc = digitalRead(lsc_pin);
     lsl = analogRead(lsl_pin);
@@ -94,6 +95,7 @@ void motor_update(){
 }
 
 void find_line(){
+    //a slightly curved walk trying to search for line
     while (on_line=false)
     {
         update_linesensors();
@@ -103,6 +105,7 @@ void find_line(){
         motor_update();
     }
     correction_timer=millis();
+    //slowly steer onto line if line is found
     while (millis()-correction_timer<=correction_timeout)
     {
         update_linesensors();
@@ -137,11 +140,13 @@ void loop(){
     I=I+P;
     D=P-last_P;
     last_P=P;
+    //calculated the speed required for the motors
     speed_difference=constrain((Kp*P+Ki*I+Kd*D), -45, 45);
     leftSpeed=centreSpeed - speed_difference;
     rightSpeed=centreSpeed + speed_difference;
     if_on_line();
     motor_update();
+    //initiate search for the line if robot is off the line for too long
     if (millis()-off_line_timer_ms>=off_line_timeout) find_line();
     
 }
